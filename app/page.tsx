@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Input } from "@/components/ui/input"
 import {
   Clock,
   Shuffle,
@@ -35,6 +36,8 @@ import {
   CloudRain,
   Check,
   Plus,
+  Minus,
+  X,
 } from "lucide-react"
 
 import { useState, useEffect } from "react"
@@ -126,21 +129,150 @@ export default function HomePage() {
   const [changeSoupOpen, setChangeSoupOpen] = useState(false)
   const [changeVegetableOpen, setChangeVegetableOpen] = useState(false)
   const [cookMenuOpen, setCookMenuOpen] = useState(false)
+  const [activeMenu, setActiveMenu] = useState<any>(null)
+  const [currentTime, setCurrentTime] = useState(new Date())
+  
+  // Meal times settings (có thể customize)
+  const mealTimes = {
+    breakfast: { hour: 7, minute: 0, label: "Bữa sáng" },
+    lunch: { hour: 12, minute: 30, label: "Bữa trưa" },
+    dinner: { hour: 18, minute: 30, label: "Bữa tối" },
+  }
+
+  // Detect current meal based on time
+  const getCurrentMeal = () => {
+    const hour = currentTime.getHours()
+    
+    if (hour >= 5 && hour < 11) {
+      return { type: "breakfast", label: "Bữa sáng", time: "07:00" }
+    } else if (hour >= 11 && hour < 16) {
+      return { type: "lunch", label: "Bữa trưa", time: "12:30" }
+    } else if (hour >= 16 && hour < 21) {
+      return { type: "dinner", label: "Bữa tối", time: "18:30" }
+    } else {
+      return { type: "dinner", label: "Bữa tối", time: "18:30" } // Đêm khuya → bữa tối tiếp theo
+    }
+  }
+
+  const currentMeal = getCurrentMeal()
   
   // Shopping preparation state
   const [shoppingItems, setShoppingItems] = useState([
-    { id: 1, name: "Đậu hũ", amount: "2 hộp (400g)", price: 15000, category: "Đạm", available: true },
-    { id: 2, name: "Cà chua", amount: "3 quả", price: 20000, category: "Rau củ", available: false },
-    { id: 3, name: "Bí đỏ", amount: "300g", price: 18000, category: "Rau củ", available: true },
-    { id: 4, name: "Rau muống", amount: "1 bó", price: 8000, category: "Rau củ", available: false },
-    { id: 5, name: "Nấm (nếu dùng)", amount: "200g", price: 25000, category: "Đạm", available: false },
-    { id: 6, name: "Tỏi", amount: "5 tép", price: 5000, category: "Gia vị", available: true },
-    { id: 7, name: "Dầu ăn", amount: "3 muỗng", price: 0, category: "Gia vị", available: true },
-    { id: 8, name: "Nước mắm chay", amount: "2 muỗng", price: 0, category: "Gia vị", available: true },
+    { id: 1, name: "Đậu hũ", amount: "2 hộp (400g)", baseAmount: "2 hộp", quantity: 1, price: 15000, category: "Đạm", available: true, note: "" },
+    { id: 2, name: "Cà chua", amount: "3 quả", baseAmount: "3 quả", quantity: 1, price: 20000, category: "Rau củ", available: false, note: "Chọn quả chín đỏ" },
+    { id: 3, name: "Bí đỏ", amount: "300g", baseAmount: "300g", quantity: 1, price: 18000, category: "Rau củ", available: true, note: "" },
+    { id: 4, name: "Rau muống", amount: "1 bó", baseAmount: "1 bó", quantity: 1, price: 8000, category: "Rau củ", available: false, note: "Tươi, non" },
+    { id: 5, name: "Nấm (nếu dùng)", amount: "200g", baseAmount: "200g", quantity: 1, price: 25000, category: "Đạm", available: false, note: "" },
+    { id: 6, name: "Tỏi", amount: "5 tép", baseAmount: "5 tép", quantity: 1, price: 5000, category: "Gia vị", available: true, note: "" },
+    { id: 7, name: "Dầu ăn", amount: "3 muỗng", baseAmount: "3 muỗng", quantity: 1, price: 0, category: "Gia vị", available: true, note: "" },
+    { id: 8, name: "Nước mắm chay", amount: "2 muỗng", baseAmount: "2 muỗng", quantity: 1, price: 0, category: "Gia vị", available: true, note: "" },
   ])
+  
+  const [editingShoppingNote, setEditingShoppingNote] = useState<number | null>(null)
+  const [editingShoppingPrice, setEditingShoppingPrice] = useState<number | null>(null)
+  const [tempShoppingNote, setTempShoppingNote] = useState("")
+  const [tempShoppingPrice, setTempShoppingPrice] = useState("")
+
+  // Real-time clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000) // Update every second
+
+    return () => clearInterval(timer)
+  }, [])
+
+  // Check meal time notifications
+  useEffect(() => {
+    const checkMealTime = () => {
+      const now = currentTime
+      const currentHour = now.getHours()
+      const currentMinute = now.getMinutes()
+      const currentSecond = now.getSeconds()
+
+      // Chỉ thông báo đúng phút, giây = 0
+      if (currentSecond !== 0) return
+
+      // Check từng bữa ăn
+      Object.entries(mealTimes).forEach(([meal, time]) => {
+        if (currentHour === time.hour && currentMinute === time.minute) {
+          // Lấy món ăn từ thực đơn nếu có
+          let mealDescription = "Đã đến giờ ăn!"
+          
+          if (activeMenu && activeMenu.schedule) {
+            const startDate = new Date(activeMenu.startDate)
+            const daysPassed = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+            
+            if (daysPassed >= 0 && daysPassed < activeMenu.days && activeMenu.schedule[daysPassed]) {
+              const todayMeal = activeMenu.schedule[daysPassed]
+              const mealKey = meal as keyof typeof todayMeal
+              mealDescription = todayMeal[mealKey] || mealDescription
+            }
+          }
+
+          toast.info(`🍽️ ${time.label}!`, {
+            description: mealDescription,
+            duration: 10000,
+            action: {
+              label: "Xem món",
+              onClick: () => window.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          })
+
+          // Play notification sound (optional)
+          if (typeof Audio !== 'undefined') {
+            try {
+              const audio = new Audio('/notification.mp3')
+              audio.volume = 0.3
+              audio.play().catch(() => {}) // Ignore errors
+            } catch (e) {}
+          }
+        }
+      })
+    }
+
+    checkMealTime()
+  }, [currentTime, activeMenu, mealTimes])
 
   useEffect(() => {
     setCurrentSeason(getSeason())
+    
+    // Load active menu from localStorage
+    const savedMenu = localStorage.getItem("angi-active-menu")
+    if (savedMenu) {
+      try {
+        const menu = JSON.parse(savedMenu)
+        setActiveMenu(menu)
+        
+        // Tính ngày hiện tại trong kế hoạch
+        const startDate = new Date(menu.startDate)
+        const today = new Date()
+        const daysPassed = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+        
+        // Nếu còn trong khoảng thời gian thực đơn
+        if (daysPassed >= 0 && daysPassed < menu.days && menu.schedule && menu.schedule[daysPassed]) {
+          const todayMeal = menu.schedule[daysPassed]
+          
+          // Cập nhật món ăn từ thực đơn (giả lập - cần map với database thực)
+          // Tạm thời dùng món mặc định nhưng hiển thị từ schedule
+          toast.info(`📅 Hôm nay là Ngày ${daysPassed + 1} của ${menu.name}`, {
+            description: `Trưa: ${todayMeal.lunch}`,
+            duration: 4000
+          })
+        } else if (daysPassed >= menu.days) {
+          // Thực đơn đã hết hạn
+          toast.warning("⏰ Thực đơn đã hoàn thành!", {
+            description: "Hãy chọn thực đơn mới hoặc gia hạn",
+            action: {
+              label: "Xem thực đơn",
+              onClick: () => window.location.href = "/menu"
+            }
+          })
+        }
+      } catch (e) {
+        console.error("Failed to load active menu", e)
+      }
+    }
     
     // Load shopping status from localStorage
     const savedStatus = localStorage.getItem("angi-shopping-status")
@@ -226,6 +358,54 @@ export default function HomePage() {
     setShoppingItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, available: !item.available } : item))
     )
+  }
+
+  const updateShoppingQuantity = (id: number, delta: number) => {
+    setShoppingItems((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const newQty = Math.max(1, item.quantity + delta)
+          return { ...item, quantity: newQty, amount: `${item.baseAmount} x${newQty}` }
+        }
+        return item
+      })
+    )
+  }
+
+  const updateShoppingNote = (id: number, note: string) => {
+    setShoppingItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, note } : item))
+    )
+    setEditingShoppingNote(null)
+    setTempShoppingNote("")
+    if (note.trim()) {
+      toast.success("💡 Đã lưu ghi chú")
+    }
+  }
+
+  const updateShoppingPrice = (id: number) => {
+    const price = parseInt(tempShoppingPrice.replace(/\D/g, ""))
+    
+    if (isNaN(price) || price < 0) {
+      toast.error("❌ Giá không hợp lệ", {
+        description: "Vui lòng nhập số dương"
+      })
+      return
+    }
+
+    if (price > 1000000) {
+      toast.error("❌ Giá quá cao", {
+        description: "Vui lòng kiểm tra lại"
+      })
+      return
+    }
+
+    setShoppingItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, price } : item))
+    )
+    setEditingShoppingPrice(null)
+    setTempShoppingPrice("")
+    toast.success("💰 Đã cập nhật giá")
   }
 
   const getShoppingStats = () => {
@@ -542,12 +722,89 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
+            <Link href="/settings">
             <Button variant="ghost" size="sm" className="gap-2 self-start sm:self-auto">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Cài đặt</span>
             </Button>
+            </Link>
           </div>
         </div>
+
+        {/* Active Menu Badge */}
+        {activeMenu && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 md:mb-8 p-4 md:p-5 rounded-xl md:rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-bold text-sm md:text-base">📋 {activeMenu.name}</h3>
+                    <Badge variant="secondary" className="text-[10px]">
+                      Ngày {(() => {
+                        const startDate = new Date(activeMenu.startDate)
+                        const today = new Date()
+                        const daysPassed = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+                        return Math.min(daysPassed + 1, activeMenu.days)
+                      })()}/{activeMenu.days}
+                    </Badge>
+                    {(() => {
+                      const startDate = new Date(activeMenu.startDate)
+                      const today = new Date()
+                      const daysPassed = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+                      const daysLeft = activeMenu.days - daysPassed - 1
+                      if (daysLeft > 0 && daysLeft <= 3) {
+                        return (
+                          <Badge variant="outline" className="text-[10px] border-orange-500 text-orange-500">
+                            Còn {daysLeft} ngày
+                          </Badge>
+                        )
+                      }
+                      if (daysPassed >= activeMenu.days) {
+                        return (
+                          <Badge variant="outline" className="text-[10px] border-red-500 text-red-500">
+                            Đã hết hạn
+                          </Badge>
+                        )
+                      }
+                      return null
+                    })()}
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    Bắt đầu từ {new Date(activeMenu.startDate).toLocaleDateString("vi-VN")}
+                    {activeMenu.schedule && (() => {
+                      const startDate = new Date(activeMenu.startDate)
+                      const today = new Date()
+                      const daysPassed = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+                      if (daysPassed >= 0 && daysPassed < activeMenu.days && activeMenu.schedule[daysPassed]) {
+                        return ` • Hôm nay: ${activeMenu.schedule[daysPassed].lunch}`
+                      }
+                      return ""
+                    })()}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  localStorage.removeItem("angi-active-menu")
+                  setActiveMenu(null)
+                  toast.success("Đã hủy áp dụng thực đơn")
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -576,12 +833,23 @@ export default function HomePage() {
                 </p>
               </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-balance leading-tight">
-                Bữa trưa hôm nay
+                {activeMenu ? `Ngày ${(() => {
+                  const startDate = new Date(activeMenu.startDate)
+                  const today = new Date()
+                  const daysPassed = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+                  return daysPassed + 1
+                })()} - ${currentMeal.label}` : `${currentMeal.label} hôm nay`}
               </h2>
             </div>
             <div className="flex items-center gap-2 md:gap-3 px-4 md:px-5 py-2 md:py-3 bg-gradient-to-br from-card to-muted/50 rounded-xl md:rounded-2xl border border-border shadow-lg">
               <Clock className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              <span className="text-base md:text-lg font-bold">12:30 PM</span>
+              <span className="text-base md:text-lg font-bold tabular-nums">
+                {currentTime.toLocaleTimeString("vi-VN", { 
+                  hour: "2-digit", 
+                  minute: "2-digit",
+                  hour12: false 
+                })}
+              </span>
             </div>
           </div>
 
@@ -1232,10 +1500,19 @@ export default function HomePage() {
                 <CardContent className="p-5 md:p-8 flex flex-col justify-between bg-gradient-to-br from-card via-card to-primary/5">
                   <div>
                     <h3 className="text-xl sm:text-2xl md:text-2xl font-bold mb-2 md:mb-3 text-balance leading-tight">
-                      Mâm cơm chay dinh dưỡng
+                      {activeMenu && activeMenu.schedule && (() => {
+                        const startDate = new Date(activeMenu.startDate)
+                        const daysPassed = Math.floor((currentTime.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+                        if (daysPassed >= 0 && daysPassed < activeMenu.days && activeMenu.schedule[daysPassed]) {
+                          const todayMeal = activeMenu.schedule[daysPassed]
+                          const mealKey = currentMeal.type as keyof typeof todayMeal
+                          return todayMeal[mealKey] || "Mâm cơm chay dinh dưỡng"
+                        }
+                        return "Mâm cơm chay dinh dưỡng"
+                      })() || "Mâm cơm chay dinh dưỡng"}
                     </h3>
                     <p className="text-sm md:text-sm text-muted-foreground mb-4 md:mb-5 leading-relaxed">
-                      Bữa cơm truyền thống với đầy đủ dinh dưỡng: {currentDishes.savory}, {currentDishes.soup}, và{" "}
+                      {activeMenu ? `Theo ${activeMenu.name} • ` : ""}Bữa cơm với {currentDishes.savory}, {currentDishes.soup}, và{" "}
                       {currentDishes.vegetable}. Hoàn hảo cho người ăn chay!
                     </p>
 
@@ -1383,42 +1660,188 @@ export default function HomePage() {
                             {shoppingItems.filter((item) => item.category === category).length}
                           </Badge>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {shoppingItems
                             .filter((item) => item.category === category)
                             .map((item) => (
                               <motion.div
                                 key={item.id}
-                                whileTap={{ scale: 0.98 }}
-                                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className={`p-3 rounded-lg border transition-all ${
                                   item.available
                                     ? "bg-chart-2/5 border-chart-2/30"
-                                    : "bg-background border-border/50 hover:border-orange-500/30"
+                                    : "bg-background border-border/50"
                                 }`}
-                                onClick={() => toggleShoppingItem(item.id)}
                               >
-                                <div
-                                  className={`flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center cursor-pointer transition-all ${
-                                    item.available
-                                      ? "bg-chart-2 border-chart-2"
-                                      : "border-muted-foreground/30 hover:border-primary"
-                                  }`}
-                                >
-                                  {item.available && <Check className="h-3.5 w-3.5 text-white" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`font-semibold text-sm ${item.available ? "line-through text-muted-foreground" : ""}`}>
-                                    {item.name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">{item.amount}</p>
-                                </div>
-                                {item.price > 0 && (
-                                  <div className="text-right">
-                                    <p className={`text-sm font-bold ${item.available ? "line-through text-muted-foreground" : "text-orange-600"}`}>
-                                      {item.price.toLocaleString()}₫
-                                    </p>
+                                {/* Main row với checkbox và tên */}
+                                <div className="flex items-start gap-3 mb-2">
+                                  <div
+                                    className={`flex-shrink-0 h-5 w-5 rounded border-2 flex items-center justify-center cursor-pointer transition-all mt-0.5 ${
+                                      item.available
+                                        ? "bg-chart-2 border-chart-2"
+                                        : "border-muted-foreground/30 hover:border-primary"
+                                    }`}
+                                    onClick={() => toggleShoppingItem(item.id)}
+                                  >
+                                    {item.available && <Check className="h-3.5 w-3.5 text-white" />}
                                   </div>
-                                )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className={`font-semibold text-sm ${item.available ? "line-through text-muted-foreground" : ""}`}>
+                                        {item.name}
+                                      </p>
+                                      {item.note && editingShoppingNote !== item.id && (
+                                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                                          💬
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    {/* Quantity controls */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <p className="text-xs text-muted-foreground">{item.amount}</p>
+                                      {item.quantity > 1 && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                          x{item.quantity}
+                                        </Badge>
+                                      )}
+                                      <div className="flex gap-1 ml-auto">
+            <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-6 w-6 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            updateShoppingQuantity(item.id, -1)
+                                          }}
+                                          disabled={item.quantity <= 1}
+                                        >
+                                          <span className="text-xs">-</span>
+            </Button>
+                                        <span className="text-xs font-bold w-6 text-center leading-6">{item.quantity}</span>
+            <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-6 w-6 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            updateShoppingQuantity(item.id, 1)
+                                          }}
+                                        >
+                                          <span className="text-xs">+</span>
+            </Button>
+                                      </div>
+                                    </div>
+
+                                    {/* Note section */}
+                                    {editingShoppingNote === item.id ? (
+                                      <div className="flex gap-2 mb-2">
+                                        <Input
+                                          value={tempShoppingNote}
+                                          onChange={(e) => setTempShoppingNote(e.target.value)}
+                                          placeholder="Ghi chú ngắn..."
+                                          className="h-7 text-xs flex-1"
+                                          autoFocus
+                                          maxLength={40}
+                                          onClick={(e) => e.stopPropagation()}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") updateShoppingNote(item.id, tempShoppingNote)
+                                            if (e.key === "Escape") setEditingShoppingNote(null)
+                                          }}
+                                        />
+            <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            updateShoppingNote(item.id, tempShoppingNote)
+                                          }}
+                                        >
+                                          <CheckCircle2 className="h-3 w-3 text-chart-2" />
+            </Button>
+          </div>
+                                    ) : item.note ? (
+                                      <div
+                                        className="p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-xs text-amber-700 dark:text-amber-400 mb-2 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setEditingShoppingNote(item.id)
+                                          setTempShoppingNote(item.note)
+                                        }}
+                                      >
+                                        💬 {item.note}
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground mb-2"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setEditingShoppingNote(item.id)
+                                          setTempShoppingNote("")
+                                        }}
+                                      >
+                                        <Plus className="h-2.5 w-2.5 mr-1" />
+                                        Thêm ghi chú
+                                      </Button>
+                                    )}
+                                  </div>
+
+                                  {/* Price section */}
+                                  {item.price > 0 && (
+                                    <div className="text-right flex-shrink-0">
+                                      {editingShoppingPrice === item.id ? (
+                                        <div className="flex flex-col gap-1">
+                                          <Input
+                                            type="text"
+                                            value={tempShoppingPrice}
+                                            onChange={(e) => setTempShoppingPrice(e.target.value)}
+                                            placeholder="Giá..."
+                                            className="h-7 w-20 text-xs text-right"
+                                            autoFocus
+                                            onClick={(e) => e.stopPropagation()}
+                                            onKeyDown={(e) => {
+                                              if (e.key === "Enter") updateShoppingPrice(item.id)
+                                              if (e.key === "Escape") setEditingShoppingPrice(null)
+                                            }}
+                                          />
+                                          <div className="flex gap-1">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-5 w-full p-0"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                updateShoppingPrice(item.id)
+                                              }}
+                                            >
+                                              <CheckCircle2 className="h-2.5 w-2.5 text-chart-2" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div
+                                          className="cursor-pointer group"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setEditingShoppingPrice(item.id)
+                                            setTempShoppingPrice((item.price * item.quantity).toString())
+                                          }}
+                                        >
+                                          <p className={`text-sm font-bold ${item.available ? "line-through text-muted-foreground" : "text-orange-600"}`}>
+                                            {(item.price * item.quantity).toLocaleString()}₫
+                                          </p>
+                                          <p className="text-[9px] text-muted-foreground opacity-0 group-hover:opacity-100">
+                                            ✏️ Sửa
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               </motion.div>
                             ))}
                         </div>
@@ -1462,7 +1885,7 @@ export default function HomePage() {
                       </Button>
                     </Link>
                   ) : (
-                    <Button 
+            <Button
                       className="w-full h-12 gap-2" 
                       size="lg"
                       onClick={() => {
@@ -1494,14 +1917,14 @@ export default function HomePage() {
                     >
                       <Plus className="h-5 w-5" />
                       Thêm vào danh sách đi chợ ({getShoppingStats().needToBuy.length} món)
-                    </Button>
+            </Button>
                   )}
 
                   {/* Info */}
                   <p className="text-[10px] text-center text-muted-foreground">
                     💡 Chỉ cho <strong>bữa ăn này</strong> • Danh sách tổng hợp xem ở trang Đi chợ
                   </p>
-                </div>
+          </div>
               </SheetContent>
             </Sheet>
         </section>
@@ -1630,11 +2053,11 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            <Link href="/menu">
-              <motion.div whileHover={{ y: -8, scale: 1.02 }} transition={{ duration: 0.3 }}>
-                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full">
-                  <div className="relative h-44 md:h-48 overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 auto-rows-fr">
+            <Link href="/menu" className="h-full">
+              <motion.div whileHover={{ y: -8, scale: 1.02 }} transition={{ duration: 0.3 }} className="h-full">
+                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full flex flex-col">
+                  <div className="relative h-48 overflow-hidden flex-shrink-0">
                   <motion.img
                     whileHover={{ scale: 1.15 }}
                     transition={{ duration: 0.5 }}
@@ -1653,12 +2076,12 @@ export default function HomePage() {
                   </Badge>
                 </div>
               </div>
-              <CardContent className="p-4 md:p-5 bg-gradient-to-br from-card to-chart-2/5">
-                <h3 className="font-bold text-base md:text-lg mb-2">Thực đơn chay thanh đạm</h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed line-clamp-2">
+              <CardContent className="p-4 md:p-5 bg-gradient-to-br from-card to-chart-2/5 flex-1 flex flex-col">
+                <h3 className="font-bold text-base md:text-lg mb-2 line-clamp-2">Thực đơn chay thanh đạm</h3>
+                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed line-clamp-2 flex-1">
                   Kế hoạch 7 ngày với các món chay giàu protein thực vật và vitamin
                 </p>
-                <div className="flex items-center justify-between text-xs md:text-sm">
+                <div className="flex items-center justify-between text-xs md:text-sm mt-auto">
                   <span className="font-medium text-muted-foreground">1,400-1,600 calo/ngày</span>
                   <span className="font-bold text-primary">21 món</span>
                 </div>
@@ -1667,10 +2090,10 @@ export default function HomePage() {
               </motion.div>
             </Link>
 
-            <Link href="/dishes">
-              <motion.div whileHover={{ y: -8, scale: 1.02 }} transition={{ duration: 0.3, delay: 0.1 }}>
-                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full">
-                  <div className="relative h-44 md:h-48 overflow-hidden">
+            <Link href="/dishes" className="h-full">
+              <motion.div whileHover={{ y: -8, scale: 1.02 }} transition={{ duration: 0.3, delay: 0.1 }} className="h-full">
+                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full flex flex-col">
+                  <div className="relative h-48 overflow-hidden flex-shrink-0">
                   <motion.img
                     whileHover={{ scale: 1.15 }}
                     transition={{ duration: 0.5 }}
@@ -1689,12 +2112,12 @@ export default function HomePage() {
                   </Badge>
                 </div>
               </div>
-              <CardContent className="p-4 md:p-5 bg-gradient-to-br from-card to-chart-1/5">
-                <h3 className="font-bold text-base md:text-lg mb-2">Đậu hũ sốt nấm hương</h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed line-clamp-2">
+              <CardContent className="p-4 md:p-5 bg-gradient-to-br from-card to-chart-1/5 flex-1 flex flex-col">
+                <h3 className="font-bold text-base md:text-lg mb-2 line-clamp-2">Đậu hũ sốt nấm hương</h3>
+                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed line-clamp-2 flex-1">
                   Món ăn chay được yêu thích nhất tuần này
                 </p>
-                <div className="flex items-center justify-between text-xs md:text-sm">
+                <div className="flex items-center justify-between text-xs md:text-sm mt-auto">
                   <span className="font-medium text-muted-foreground">380 calo</span>
                   <span className="font-bold text-primary">25 phút</span>
                 </div>
@@ -1703,14 +2126,14 @@ export default function HomePage() {
               </motion.div>
             </Link>
 
-            <motion.div whileHover={{ y: -8, scale: 1.02 }} transition={{ duration: 0.3, delay: 0.2 }}>
+            <motion.div whileHover={{ y: -8, scale: 1.02 }} transition={{ duration: 0.3, delay: 0.2 }} className="h-full">
               <Card 
-                className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full"
+                className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group cursor-pointer h-full flex flex-col"
                 onClick={() => toast.info("🍜 Tính năng đang phát triển", {
                   description: "Danh sách quán ăn gần bạn sẽ sớm có"
                 })}
               >
-                <div className="relative h-44 md:h-48 overflow-hidden">
+                <div className="relative h-48 overflow-hidden flex-shrink-0">
                   <motion.img
                     whileHover={{ scale: 1.15 }}
                     transition={{ duration: 0.5 }}
@@ -1729,12 +2152,12 @@ export default function HomePage() {
                   </Badge>
                 </div>
               </div>
-              <CardContent className="p-4 md:p-5 bg-gradient-to-br from-card to-chart-2/5">
-                <h3 className="font-bold text-base md:text-lg mb-2">Quán Chay Tịnh Tâm</h3>
-                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed line-clamp-2">
+              <CardContent className="p-4 md:p-5 bg-gradient-to-br from-card to-chart-2/5 flex-1 flex flex-col">
+                <h3 className="font-bold text-base md:text-lg mb-2 line-clamp-2">Quán Chay Tịnh Tâm</h3>
+                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed line-clamp-2 flex-1">
                   Quán chay thuần túy, món ăn đa dạng gần bạn
                 </p>
-                <div className="flex items-center justify-between text-xs md:text-sm">
+                <div className="flex items-center justify-between text-xs md:text-sm mt-auto">
                   <span className="font-medium text-muted-foreground">40,000₫ - 70,000₫</span>
                   <span className="font-bold text-primary">0.8 km</span>
                 </div>

@@ -3,6 +3,14 @@
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   ChefHat,
   Menu,
   Home,
@@ -12,6 +20,8 @@ import {
   Calendar,
   Settings,
   Leaf,
+  User,
+  LogOut,
 } from "lucide-react"
 import Link from "next/link"
 import { GlobalSearch } from "@/components/GlobalSearch"
@@ -42,43 +52,33 @@ export function AppHeader() {
           <GlobalSearch />
 
           {/* Desktop Navigation */}
-          <Link href="/" className="hidden lg:block">
-            <Button 
-              variant={isActive("/") ? "default" : "ghost"} 
-              size="sm" 
-              className="font-medium hover:bg-primary/10"
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Trang chủ
-            </Button>
-          </Link>
-          <Link href="/menu" className="hidden lg:block">
+          <Link href="/menu" className="hidden md:block">
             <Button 
               variant={isActive("/menu") ? "default" : "ghost"} 
               size="sm" 
-              className="font-medium hover:bg-primary/10"
+              className="font-medium hover:bg-primary/10 gap-2"
             >
-              <BookOpen className="mr-2 h-4 w-4" />
+              <BookOpen className="h-4 w-4" />
               Thực đơn
             </Button>
           </Link>
-          <Link href="/dishes" className="hidden lg:block">
+          <Link href="/dishes" className="hidden md:block">
             <Button 
               variant={isActive("/dishes") ? "default" : "ghost"} 
               size="sm" 
-              className="font-medium hover:bg-primary/10"
+              className="font-medium hover:bg-primary/10 gap-2"
             >
-              <Utensils className="mr-2 h-4 w-4" />
+              <Utensils className="h-4 w-4" />
               Món ăn
             </Button>
           </Link>
-          <Link href="/shopping" className="hidden lg:block">
+          <Link href="/shopping" className="hidden md:block">
             <Button 
               variant={isActive("/shopping") ? "default" : "ghost"} 
               size="sm" 
-              className="font-medium hover:bg-primary/10"
+              className="font-medium hover:bg-primary/10 gap-2"
             >
-              <ShoppingCart className="mr-2 h-4 w-4" />
+              <ShoppingCart className="h-4 w-4" />
               Đi chợ
             </Button>
           </Link>
@@ -151,27 +151,73 @@ export function AppHeader() {
                   <span className="ml-auto text-xs">Sớm có</span>
                 </Button>
                 <div className="border-t border-border my-2" />
-                <Button variant="ghost" className="justify-start h-12 text-base font-medium opacity-50">
-                  <Settings className="mr-3 h-5 w-5" />
-                  Cài đặt
-                  <span className="ml-auto text-xs">Sớm có</span>
-                </Button>
+                <Link href="/settings" className="w-full">
+                  <Button 
+                    variant={isActive("/settings") ? "default" : "ghost"} 
+                    className="w-full justify-start h-12 text-base font-medium"
+                  >
+                    <Settings className="mr-3 h-5 w-5" />
+                    Cài đặt
+                  </Button>
+                </Link>
               </div>
             </SheetContent>
           </Sheet>
 
           {/* User Profile */}
-          <div className="relative hidden md:block">
-            <Button className="font-medium shadow-lg shadow-primary/25 pl-2 pr-3 md:pl-3 md:pr-4 gap-1.5 md:gap-2 text-sm md:text-base h-9 md:h-10">
-              <div className="h-6 w-6 md:h-7 md:w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                <span className="text-xs md:text-sm font-bold">A</span>
-              </div>
-              <span className="hidden sm:inline">Anh Tuấn</span>
-            </Button>
-            <div className="absolute -top-1 -right-1 h-4 w-4 md:h-5 md:w-5 rounded-full bg-chart-2 border-2 border-card flex items-center justify-center">
-              <Leaf className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 text-white" />
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="relative h-9 md:h-10 w-9 md:w-auto px-1 md:px-3 gap-2 hover:bg-primary/10"
+              >
+                <div className="relative">
+                  <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-background">
+                    AT
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 md:h-3.5 md:w-3.5 rounded-full bg-chart-2 border-2 border-background flex items-center justify-center">
+                    <Leaf className="h-1.5 w-1.5 md:h-2 md:w-2 text-white" />
+                  </div>
+                </div>
+                <span className="hidden md:inline text-sm font-medium">Anh Tuấn</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-lg shadow-md ring-2 ring-primary/20">
+                    AT
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">Anh Tuấn</p>
+                    <p className="text-xs text-muted-foreground font-normal truncate">anh.tuan@email.com</p>
+                    <Badge variant="secondary" className="mt-1 text-[10px] h-5">
+                      <Leaf className="h-2.5 w-2.5 mr-1" />
+                      Chay
+                    </Badge>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <Link href="/profile">
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  Trang cá nhân
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/settings">
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Cài đặt
+                </DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Đăng xuất
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
       </div>
     </header>
