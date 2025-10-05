@@ -1,0 +1,26 @@
+{
+  "name": "mealplan-ai-database",
+  "version": "1.0.0",
+  "description": "Database schema and migrations for MealPlan AI",
+  "scripts": {
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status",
+    "supabase:reset": "supabase db reset",
+    "supabase:push": "supabase db push",
+    "supabase:pull": "supabase db pull",
+    "supabase:types": "supabase gen types typescript --local > ../lib/supabase-types.ts",
+    "seed": "psql $DATABASE_URL -f seed_data.sql",
+    "migrate": "psql $DATABASE_URL -f supabase_migration.sql"
+  },
+  "keywords": [
+    "supabase",
+    "postgresql",
+    "database",
+    "meal-planning",
+    "nutrition"
+  ],
+  "author": "MealPlan AI Team",
+  "license": "MIT"
+}
+
