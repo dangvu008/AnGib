@@ -210,10 +210,11 @@ export default function MenuPage() {
                         </p>
                       </div>
                     </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                    {/* Row 1: Primary actions */}
                     <div className="flex flex-wrap gap-2">
                       <Button 
-                        className="flex-1 min-w-[140px]"
+                        className="min-w-[140px]"
                         size="sm"
                         onClick={() => setApplyingMenu(plan)}
                       >
@@ -229,39 +230,42 @@ export default function MenuPage() {
                         Thêm vào đi chợ
                       </Button>
                     </div>
-                    <ShareButton
-                      content={{
-                        title: plan.name,
-                        description: plan.description,
-                        type: 'menu',
-                        data: {
-                          days: plan.days,
-                          totalMeals: plan.totalMeals,
-                          calories: plan.calories,
-                          tags: plan.tags,
-                          schedule: plan.schedule,
-                          mainDishes: plan.schedule.map(day => day.lunch),
-                          sideDishes: plan.schedule.map(day => day.breakfast),
-                          totalCalories: plan.calories
-                        }
-                      }}
-                      size="sm"
-                      variant="outline"
-                    />
-                    <QuickHideButton
-                      itemId={plan.id}
-                      itemName={plan.name}
-                      itemType="meal"
-                      itemImage={plan.image}
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="whitespace-nowrap"
-                      onClick={() => toast.info("📋 Tính năng xem chi tiết đang phát triển")}
-                    >
-                      Chi tiết
-                    </Button>
+                    {/* Row 2: Secondary actions */}
+                    <div className="flex flex-wrap gap-2">
+                      <ShareButton
+                        content={{
+                          title: plan.name,
+                          description: plan.description,
+                          type: 'menu',
+                          data: {
+                            days: plan.days,
+                            totalMeals: plan.totalMeals,
+                            calories: plan.calories,
+                            tags: plan.tags,
+                            schedule: plan.schedule,
+                            mainDishes: plan.schedule.map(day => day.lunch),
+                            sideDishes: plan.schedule.map(day => day.breakfast),
+                            totalCalories: plan.calories
+                          }
+                        }}
+                        size="sm"
+                        variant="outline"
+                      />
+                      <QuickHideButton
+                        itemId={plan.id}
+                        itemName={plan.name}
+                        itemType="meal"
+                        itemImage={plan.image}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="whitespace-nowrap"
+                        onClick={() => toast.info("📋 Tính năng xem chi tiết đang phát triển")}
+                      >
+                        Chi tiết
+                      </Button>
+                    </div>
                   </div>
                   </CardContent>
                 </div>
