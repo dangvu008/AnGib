@@ -526,11 +526,11 @@ export default function WeeklyPlanPage() {
           )) : null}
         </div>
       </div>
+      <AddToShoppingDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onAddIngredients={() => setShowAddDialog(false)}
+      />
     </div>
-    <AddToShoppingDialog
-      open={showAddDialog}
-      onOpenChange={setShowAddDialog}
-      onAddIngredients={() => setShowAddDialog(false)}
-    />
   )
 }
