@@ -98,12 +98,12 @@ export function AppHeader() {
     <header className="border-b border-border/40 bg-card/95 backdrop-blur-2xl sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-4 md:py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 md:gap-3">
-          <div className="h-9 w-9 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-gradient-to-br from-primary via-chart-1 to-chart-5 flex items-center justify-center shadow-xl shadow-primary/30">
-            <ChefHat className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+          <div className="h-9 w-9 md:h-11 md:w-11 rounded-xl md:rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-primary/20 ring-1 ring-black/5 overflow-hidden">
+            <img src="/placeholder-logo.svg" alt="AnGi logo" className="h-6 w-6 md:h-7 md:w-7" />
           </div>
           <div>
             <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-chart-1 to-chart-5 bg-clip-text text-transparent">
-              MealPlan AI
+              AnGi
             </h1>
             <p className="text-[10px] md:text-xs text-muted-foreground font-medium">Trợ lý ẩm thực thông minh</p>
           </div>
