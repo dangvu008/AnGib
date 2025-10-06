@@ -1,0 +1,15 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e11d0c"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#g1)"/>
+  <g fill="#fff">
+    <path d="M44 86h40c2.2 0 4-1.8 4-4s-1.8-4-4-4H44c-2.2 0-4 1.8-4 4s1.8 4 4 4z" opacity=".9"/>
+    <path d="M64 32c-12.15 0-22 9.85-22 22 0 6.05 2.45 11.5 6.4 15.44C50.6 71.6 56.05 74 62.1 74h3.8c6.05 0 11.5-2.4 15.7-6.56C85.6 65.5 88 60.05 88 54c0-12.15-9.85-22-24-22zm0 8c8.84 0 16 7.16 16 16 0 3.97-1.46 7.58-3.86 10.33C72.86 69.08 69.34 70.9 65.9 71h-3.8c-3.44-.1-6.96-1.92-10.24-4.67C49.46 63.58 48 59.97 48 56c0-8.84 7.16-16 16-16z"/>
+    <text x="64" y="106" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="20" font-weight="700">AnGi</text>
+  </g>
+</svg>
+
