@@ -17,6 +17,7 @@ import { useState, useEffect } from "react"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { AppHeader } from "@/components/AppHeader"
 import { QuickHideButton } from "@/components/HideButton"
+import { AddDishToShoppingButton } from "@/components/AddDishToShoppingButton"
 
 interface Dish {
   id: string
@@ -255,12 +256,26 @@ export default function DishesPage() {
                     ))}
                   </div>
 
-                  <Link href={`/cook/${dish.id}`}>
-                    <Button className="w-full" size="sm">
-                      <ChefHat className="h-4 w-4 mr-2" />
-                      Xem công thức
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <AddDishToShoppingButton
+                      dish={{
+                        id: dish.id,
+                        name: dish.nameVi,
+                        ingredients: [], // Will be loaded from API
+                        estimatedCost: 0
+                      }}
+                      variant="outline"
+                      size="sm"
+                      showText={false}
+                      className="flex-shrink-0"
+                    />
+                    <Link href={`/cook/${dish.id}`} className="flex-1">
+                      <Button className="w-full" size="sm">
+                        <ChefHat className="h-4 w-4 mr-2" />
+                        Xem công thức
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
