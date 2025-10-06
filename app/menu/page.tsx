@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Leaf,
   ChefHat,
-  CheckCircle2
+  CheckCircle2,
+  ShoppingCart
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -177,6 +178,16 @@ export default function MenuPage() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/50 to-transparent" />
+                    {/* Quick hide in corner */}
+                    <div className="absolute top-3 right-3 z-10">
+                      <QuickHideButton
+                        itemId={plan.id}
+                        itemName={plan.name}
+                        itemType="meal"
+                        itemImage={plan.image}
+                        className="h-8 w-8 p-0 rounded-full bg-white/90 hover:bg-white shadow"
+                      />
+                    </div>
                   </div>
                   <CardContent className="flex-1 p-5 md:p-6">
                     <div className="flex items-start justify-between mb-3">
@@ -223,10 +234,12 @@ export default function MenuPage() {
                     <Button 
                       variant="outline"
                       size="sm" 
-                      className="col-span-2 sm:col-span-1 h-10"
+                      className="col-span-2 sm:col-span-1 h-10 gap-2"
                       onClick={() => setShowAddDialog(true)}
                     >
-                      Thêm vào đi chợ
+                      <ShoppingCart className="h-4 w-4" />
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden md:inline">Thêm vào đi chợ</span>
                     </Button>
 
                     {/* Secondary actions */}
@@ -256,13 +269,6 @@ export default function MenuPage() {
                       </div>
                     </div>
                     <div className="col-span-2 sm:col-span-1 flex gap-2">
-                      <QuickHideButton
-                        itemId={plan.id}
-                        itemName={plan.name}
-                        itemType="meal"
-                        itemImage={plan.image}
-                        className="h-10"
-                      />
                       <Button 
                         variant="outline" 
                         size="sm" 
