@@ -32,6 +32,7 @@ import { GlobalSearch } from "@/components/GlobalSearch"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { ClientOnly } from "@/components/ClientOnly"
+import { useEffect, useState } from "react"
 
 export function AppHeader() {
   const pathname = usePathname()
