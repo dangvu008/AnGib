@@ -25,7 +25,6 @@ import { toast } from "sonner"
 import { ShareButton } from "@/components/ShareButton"
 import { AppHeader } from "@/components/AppHeader"
 import { AddToShoppingDialog } from "@/components/AddToShoppingDialog"
-import { useState } from "react"
 
 interface MealPlan {
   id: string
