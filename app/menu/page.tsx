@@ -210,57 +210,63 @@ export default function MenuPage() {
                         </p>
                       </div>
                     </div>
-                  <div className="space-y-2">
-                    {/* Row 1: Primary actions */}
-                    <div className="flex flex-wrap gap-2">
-                      <Button 
-                        className="min-w-[140px]"
-                        size="sm"
-                        onClick={() => setApplyingMenu(plan)}
-                      >
-                        <ChefHat className="h-4 w-4 mr-2" />
-                        Áp dụng
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        size="sm" 
-                        className="min-w-[160px]"
-                        onClick={() => setShowAddDialog(true)}
-                      >
-                        Thêm vào đi chợ
-                      </Button>
+                  <div className="grid grid-cols-2 gap-2 md:gap-3">
+                    {/* Primary actions */}
+                    <Button 
+                      className="col-span-2 sm:col-span-1 h-10"
+                      size="sm"
+                      onClick={() => setApplyingMenu(plan)}
+                    >
+                      <ChefHat className="h-4 w-4 mr-2" />
+                      Áp dụng
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm" 
+                      className="col-span-2 sm:col-span-1 h-10"
+                      onClick={() => setShowAddDialog(true)}
+                    >
+                      Thêm vào đi chợ
+                    </Button>
+
+                    {/* Secondary actions */}
+                    <div className="col-span-2 sm:col-span-1">
+                      <div className="h-10 flex items-stretch">
+                        <div className="w-full">
+                          <ShareButton
+                            content={{
+                              title: plan.name,
+                              description: plan.description,
+                              type: 'menu',
+                              data: {
+                                days: plan.days,
+                                totalMeals: plan.totalMeals,
+                                calories: plan.calories,
+                                tags: plan.tags,
+                                schedule: plan.schedule,
+                                mainDishes: plan.schedule.map(day => day.lunch),
+                                sideDishes: plan.schedule.map(day => day.breakfast),
+                                totalCalories: plan.calories
+                              }
+                            }}
+                            size="sm"
+                            variant="outline"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    {/* Row 2: Secondary actions */}
-                    <div className="flex flex-wrap gap-2">
-                      <ShareButton
-                        content={{
-                          title: plan.name,
-                          description: plan.description,
-                          type: 'menu',
-                          data: {
-                            days: plan.days,
-                            totalMeals: plan.totalMeals,
-                            calories: plan.calories,
-                            tags: plan.tags,
-                            schedule: plan.schedule,
-                            mainDishes: plan.schedule.map(day => day.lunch),
-                            sideDishes: plan.schedule.map(day => day.breakfast),
-                            totalCalories: plan.calories
-                          }
-                        }}
-                        size="sm"
-                        variant="outline"
-                      />
+                    <div className="col-span-2 sm:col-span-1 flex gap-2">
                       <QuickHideButton
                         itemId={plan.id}
                         itemName={plan.name}
                         itemType="meal"
                         itemImage={plan.image}
+                        className="h-10"
                       />
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="whitespace-nowrap"
+                        className="flex-1 h-10 whitespace-nowrap"
                         onClick={() => toast.info("📋 Tính năng xem chi tiết đang phát triển")}
                       >
                         Chi tiết
