@@ -221,10 +221,10 @@ export default function MenuPage() {
                         </p>
                       </div>
                     </div>
-                  <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <div className="flex flex-wrap gap-2 md:gap-3 items-center">
                     {/* Primary actions */}
                     <Button 
-                      className="col-span-2 sm:col-span-1 h-10"
+                      className="h-10 px-4"
                       size="sm"
                       onClick={() => setApplyingMenu(plan)}
                     >
@@ -234,45 +234,39 @@ export default function MenuPage() {
                     <Button 
                       variant="outline"
                       size="sm" 
-                      className="col-span-2 sm:col-span-1 h-10 gap-2"
+                      className="h-10 px-4 gap-2"
                       onClick={() => setShowAddDialog(true)}
                     >
                       <ShoppingCart className="h-4 w-4" />
                       <Plus className="h-4 w-4" />
-                      <span className="hidden md:inline">Thêm vào đi chợ</span>
+                      <span className="hidden md:inline">Thêm vào</span>
                     </Button>
 
                     {/* Secondary actions */}
-                    <div className="col-span-2 sm:col-span-1">
-                      <div className="h-10 flex items-stretch">
-                        <div className="w-full">
-                          <ShareButton
-                            content={{
-                              title: plan.name,
-                              description: plan.description,
-                              type: 'menu',
-                              data: {
-                                days: plan.days,
-                                totalMeals: plan.totalMeals,
-                                calories: plan.calories,
-                                tags: plan.tags,
-                                schedule: plan.schedule,
-                                mainDishes: plan.schedule.map(day => day.lunch),
-                                sideDishes: plan.schedule.map(day => day.breakfast),
-                                totalCalories: plan.calories
-                              }
-                            }}
-                            size="sm"
-                            variant="outline"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1 flex gap-2">
+                    <ShareButton
+                      content={{
+                        title: plan.name,
+                        description: plan.description,
+                        type: 'menu',
+                        data: {
+                          days: plan.days,
+                          totalMeals: plan.totalMeals,
+                          calories: plan.calories,
+                          tags: plan.tags,
+                          schedule: plan.schedule,
+                          mainDishes: plan.schedule.map(day => day.lunch),
+                          sideDishes: plan.schedule.map(day => day.breakfast),
+                          totalCalories: plan.calories
+                        }
+                      }}
+                      size="sm"
+                      variant="outline"
+                    />
+                    <div className="flex gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1 h-10 whitespace-nowrap"
+                        className="h-10 px-4 whitespace-nowrap"
                         onClick={() => toast.info("📋 Tính năng xem chi tiết đang phát triển")}
                       >
                         Chi tiết
