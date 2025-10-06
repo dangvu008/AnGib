@@ -120,3 +120,4 @@ export type Database = {
 // Typed client
 export const supabaseTyped = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
+

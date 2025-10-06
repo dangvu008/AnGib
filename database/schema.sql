@@ -435,3 +435,4 @@ CREATE TRIGGER update_restaurant_rating_trigger
     WHEN (NEW.reviewable_type = 'restaurant')
     EXECUTE FUNCTION update_restaurant_rating();
 
+

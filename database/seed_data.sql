@@ -105,3 +105,4 @@ INSERT INTO restaurants (id, name, description, cuisine_type, address, latitude,
 ('950e8400-e29b-41d4-a716-446655440001', 'Quán Chay Tịnh Tâm', 'Quán chay thuần túy với nhiều món ăn truyền thống', 'vietnamese', '123 Nguyễn Huệ, Quận 1, TP.HCM', 10.7769, 106.7009, 'budget', 40000, 70000, 4.9, true, true, '/restaurant-interior-cozy-dining.jpg'),
 ('950e8400-e29b-41d4-a716-446655440002', 'Nhà Hàng Chay Sen Việt', 'Nhà hàng chay cao cấp với không gian sang trọng', 'vietnamese', '456 Lê Lợi, Quận 3, TP.HCM', 10.7756, 106.6917, 'moderate', 80000, 150000, 4.7, true, true, '/restaurant-interior-cozy-dining.jpg');
 
+

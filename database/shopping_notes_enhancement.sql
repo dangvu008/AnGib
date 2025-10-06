@@ -295,3 +295,4 @@ FROM public.ingredients i
 LEFT JOIN public.ingredient_shopping_notes isn ON i.id = isn.ingredient_id
 GROUP BY i.id, i.name_vi;
 
+

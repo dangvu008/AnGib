@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
@@ -22,15 +23,35 @@ import {
   Leaf,
   User,
   LogOut,
+  ChevronDown,
+  Bell,
+  Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { usePathname } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function AppHeader() {
   const pathname = usePathname()
+  const { isAuthenticated, user, login, logout } = useAuth()
 
   const isActive = (path: string) => pathname === path
+
+  const handleDemoLogin = () => {
+    const demoUser = {
+      id: "demo-user-1",
+      name: "Anh Tuấn",
+      email: "anh.tuan@email.com",
+      avatar: "/placeholder-user.jpg",
+      preferences: {
+        diet: "vegetarian",
+        allergies: ["gluten"],
+        budget: 1200000
+      }
+    }
+    login(demoUser)
+  }
 
   return (
     <header className="border-b border-border/40 bg-card/95 backdrop-blur-2xl sticky top-0 z-50 shadow-sm">
@@ -165,59 +186,98 @@ export function AppHeader() {
           </Sheet>
 
           {/* User Profile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                className="relative h-9 md:h-10 w-9 md:w-auto px-1 md:px-3 gap-2 hover:bg-primary/10"
-              >
-                <div className="relative">
-                  <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-background">
-                    AT
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="relative h-9 md:h-10 w-9 md:w-auto px-1 md:px-3 gap-2 hover:bg-primary/10 transition-all duration-200 group"
+                >
+                  <div className="relative">
+                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-background group-hover:scale-105 transition-transform">
+                      {user?.name?.charAt(0) || "U"}
+                    </div>
+                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 md:h-3.5 md:w-3.5 rounded-full bg-chart-2 border-2 border-background flex items-center justify-center">
+                      <Leaf className="h-1.5 w-1.5 md:h-2 md:w-2 text-white" />
+                    </div>
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 md:h-3.5 md:w-3.5 rounded-full bg-chart-2 border-2 border-background flex items-center justify-center">
-                    <Leaf className="h-1.5 w-1.5 md:h-2 md:w-2 text-white" />
-                  </div>
-                </div>
-                <span className="hidden md:inline text-sm font-medium">Anh Tuấn</span>
-              </Button>
-            </DropdownMenuTrigger>
+                  <span className="hidden md:inline text-sm font-medium group-hover:text-primary transition-colors">{user?.name || "User"}</span>
+                  <ChevronDown className="hidden md:inline h-3 w-3 ml-1 group-hover:rotate-180 transition-transform" />
+                </Button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
               <DropdownMenuLabel className="pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-lg shadow-md ring-2 ring-primary/20">
-                    AT
+                  <div className="relative">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-lg shadow-md ring-2 ring-primary/20">
+                      AT
+                    </div>
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">3</span>
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">Anh Tuấn</p>
                     <p className="text-xs text-muted-foreground font-normal truncate">anh.tuan@email.com</p>
-                    <Badge variant="secondary" className="mt-1 text-[10px] h-5">
-                      <Leaf className="h-2.5 w-2.5 mr-1" />
-                      Chay
-                    </Badge>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary" className="text-[10px] h-5">
+                        <Leaf className="h-2.5 w-2.5 mr-1" />
+                        Chay
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] h-5 border-green-500 text-green-600">
+                        <Sparkles className="h-2.5 w-2.5 mr-1" />
+                        Pro
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <Link href="/profile">
-                <DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
-                  Trang cá nhân
+                  <div className="flex-1">
+                    <div className="font-medium">Trang cá nhân</div>
+                    <div className="text-xs text-muted-foreground">Xem thống kê & hoạt động</div>
+                  </div>
                 </DropdownMenuItem>
               </Link>
               <Link href="/settings">
-                <DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
-                  Cài đặt
+                  <div className="flex-1">
+                    <div className="font-medium">Cài đặt</div>
+                    <div className="text-xs text-muted-foreground">Tùy chỉnh sở thích</div>
+                  </div>
                 </DropdownMenuItem>
               </Link>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="cursor-pointer">
+                <Bell className="mr-2 h-4 w-4" />
+                <div className="flex-1">
+                  <div className="font-medium">Thông báo</div>
+                  <div className="text-xs text-muted-foreground">3 thông báo mới</div>
+                </div>
+                <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center text-xs">3</Badge>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Đăng xuất
+                <div className="flex-1">
+                  <div className="font-medium">Đăng xuất</div>
+                  <div className="text-xs text-muted-foreground">Thoát khỏi tài khoản</div>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          ) : (
+            <Link href="/login">
+              <Button className="gap-2">
+                <User className="h-4 w-4" />
+                <span className="hidden md:inline">Đăng nhập</span>
+              </Button>
+            </Link>
+          )}
         </nav>
       </div>
     </header>

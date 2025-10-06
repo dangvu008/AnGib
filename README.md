@@ -23,11 +23,13 @@
 - Rating và yêu thích
 - Xem công thức chi tiết
 
-### 🛒 Đi chợ (/shopping)
-- Danh sách mua sắm thông minh
-- Checkbox theo dõi đã mua
-- Tính tổng chi phí
-- Phân loại theo danh mục
+### 🛒 Lịch sử Mua sắm (/shopping)
+- 📊 Lịch sử mua sắm đã hoàn thành
+- 💰 Thống kê chi tiêu theo tuần/tháng
+- 📈 Biểu đồ phân bổ chi tiêu theo danh mục
+- 🔍 Filter theo thời gian (tuần/tháng/tất cả)
+- 📝 Chi tiết nguyên liệu đã mua
+- Xem [Hướng dẫn chi tiết](./SHOPPING_HISTORY_GUIDE.md)
 
 ### 👨‍🍳 Nấu ăn (/cook)
 - Hướng dẫn từng bước chi tiết
@@ -92,7 +94,7 @@
 | Daily tips | ✅ | Cooking tips animation |
 | Smart filters | ✅ | Sort by calo/time/popularity |
 | Toast notifications | ✅ | Feedback cho mọi action |
-| Shopping list | ✅ | Checklist + price tracking |
+| Shopping history | ✅ | History + spending analytics |
 | Recipe steps | ✅ | Step-by-step cooking guide |
 
 ## 🎨 Design System
@@ -133,12 +135,15 @@ npm run dev
 
 ## 🎯 Roadmap
 
-- [ ] Kết nối Supabase database
-- [ ] Authentication & user profiles
+- [x] Kết nối Supabase database
+- [x] Authentication & user profiles
+- [x] Shopping history & expense tracking
 - [ ] AI meal planning algorithm
 - [ ] Weather API integration
 - [ ] Recipe recommendations ML model
 - [ ] Social features (share, comment)
+- [ ] Budget notifications & alerts
+- [ ] Spending trend analysis with charts
 - [ ] Push notifications
 - [ ] PWA support
 - [ ] Multi-language support

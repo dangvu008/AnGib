@@ -17,6 +17,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import { AppHeader } from "@/components/AppHeader"
+import { ShareButton } from "@/components/ShareButton"
 import { toast } from "sonner"
 import { useParams } from "next/navigation"
 
@@ -228,12 +229,32 @@ export default function CookDishPage() {
                 Bước {completedSteps.length}/{recipe.steps.length} • {progress.toFixed(0)}% hoàn thành
               </p>
             </div>
-            <Link href="/shopping">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline">Mua nguyên liệu</span>
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <ShareButton
+                content={{
+                  title: recipe.name,
+                  description: recipe.description,
+                  type: 'recipe',
+                  data: {
+                    prepTime: recipe.prepTime,
+                    cookTime: recipe.cookTime,
+                    servings: recipe.servings,
+                    calories: recipe.calories,
+                    ingredients: recipe.ingredients.map((ing: any) => `${ing.amount} ${ing.name}`),
+                    steps: recipe.steps.map((step: any) => step.description),
+                    tags: recipe.tags
+                  }
+                }}
+                size="sm"
+                variant="outline"
+              />
+              <Link href="/shopping">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mua nguyên liệu</span>
+                </Button>
+              </Link>
+            </div>
           </div>
           {/* Progress Bar */}
           <div className="h-2.5 bg-muted rounded-full overflow-hidden">

@@ -608,3 +608,4 @@ LEFT JOIN public.ingredient_units iu ON i.id = iu.ingredient_id
 LEFT JOIN public.units u ON iu.unit_id = u.id AND u.is_active = true
 GROUP BY i.id, i.name, i.name_vi, i.category;
 
+

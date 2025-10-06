@@ -3,10 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { 
-  ArrowLeft, 
-  Search,
   Clock, 
   Flame,
   Leaf,
@@ -16,133 +13,184 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { AppHeader } from "@/components/AppHeader"
+import { QuickHideButton } from "@/components/HideButton"
+
+interface Dish {
+  id: string
+  name: string
+  nameVi: string
+  category: {
+    id: string
+    name: string
+    nameVi: string
+  }
+  mealType: string
+  difficultyLevel: string
+  prepTimeMinutes: number
+  cookTimeMinutes: number
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+  isVegetarian: boolean
+  isVegan: boolean
+  imageUrl?: string
+  ratingAvg: number
+  dishTags: {
+    tag: {
+      id: string
+      name: string
+      nameVi: string
+    }
+  }[]
+}
 
 export default function DishesPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [dishes, setDishes] = useState<Dish[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all")
 
-  const dishes = [
-    {
-      id: 1,
-      name: "Đậu hũ sốt cà chua",
-      description: "Món chay đơn giản, đậm đà hương vị",
-      calo: 180,
-      time: "15 phút",
-      difficulty: "Dễ",
-      rating: 4.5,
-      image: "/healthy-salad-bowl-colorful-vegetables.jpg",
-      tags: ["Chay", "Dễ làm", "Ít calo"],
-      isVegetarian: true,
-      isFavorite: true,
-    },
-    {
-      id: 2,
-      name: "Canh bí đỏ",
-      description: "Canh ngọt thanh, bổ dưỡng",
-      calo: 80,
-      time: "10 phút",
-      difficulty: "Dễ",
-      rating: 4.8,
-      image: "/healthy-salad-bowl-colorful-vegetables.jpg",
-      tags: ["Chay", "Nhanh", "Healthy"],
-      isVegetarian: true,
-      isFavorite: false,
-    },
-    {
-      id: 3,
-      name: "Rau muống xào tỏi",
-      description: "Món rau giòn ngon, đơn giản",
-      calo: 60,
-      time: "5 phút",
-      difficulty: "Rất dễ",
-      rating: 4.3,
-      image: "/healthy-salad-bowl-colorful-vegetables.jpg",
-      tags: ["Chay", "Express", "Tiết kiệm"],
-      isVegetarian: true,
-      isFavorite: false,
-    },
-    {
-      id: 4,
-      name: "Nấm xào rau củ",
-      description: "Thơm ngon, giàu vitamin",
-      calo: 150,
-      time: "12 phút",
-      difficulty: "Dễ",
-      rating: 4.6,
-      image: "/grilled-chicken-rice-asian-meal.jpg",
-      tags: ["Chay", "Protein cao", "Ngon"],
-      isVegetarian: true,
-      isFavorite: true,
-    },
-  ]
+  useEffect(() => {
+    fetchDishes()
+  }, [selectedCategory, selectedDifficulty])
 
-  const filteredDishes = dishes.filter(dish =>
-    dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dish.description.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const fetchDishes = async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (selectedCategory !== "all") {
+        params.append("category", selectedCategory)
+      }
+      if (selectedDifficulty !== "all") {
+        params.append("difficulty", selectedDifficulty)
+      }
+
+      const response = await fetch(`/api/dishes?${params.toString()}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch dishes')
+      }
+      const data = await response.json()
+      setDishes(data.dishes || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
+  const getDifficultyText = (level: string) => {
+    switch (level) {
+      case 'easy': return 'Dễ'
+      case 'medium': return 'Trung bình'
+      case 'hard': return 'Khó'
+      default: return 'Dễ'
+    }
+  }
+
+  const getMealTypeText = (type: string) => {
+    switch (type) {
+      case 'breakfast': return 'Sáng'
+      case 'lunch': return 'Trưa'
+      case 'dinner': return 'Tối'
+      case 'snack': return 'Ăn vặt'
+      default: return 'Trưa'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AppHeader />
+        <div className="max-w-6xl mx-auto p-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AppHeader />
+        <div className="max-w-6xl mx-auto p-4">
+          <div className="text-center py-8">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Lỗi tải dữ liệu</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={fetchDishes}>Thử lại</Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gray-50">
       <AppHeader />
+      
+      <div className="max-w-6xl mx-auto p-4">
 
-      <main className="container mx-auto px-4 py-6 md:py-10 max-w-7xl">
-        {/* Page Header */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">🍲 Món ăn</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Kho công thức nấu ăn</p>
-        </div>
 
-        {/* Local Search */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm món ăn trong trang này..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11"
-          />
-        </div>
-
-        {/* Quick Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-4 hide-scrollbar mb-6">
-          <Badge variant="default" className="cursor-pointer whitespace-nowrap">
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Button
+            variant={selectedCategory === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("all")}
+          >
             Tất cả ({dishes.length})
-          </Badge>
-          <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 whitespace-nowrap">
-            <Leaf className="h-3 w-3 mr-1" />
+          </Button>
+          <Button
+            variant={selectedCategory === "vegetarian" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory("vegetarian")}
+          >
+            <Leaf className="h-4 w-4 mr-1" />
             Chay
-          </Badge>
-          <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 whitespace-nowrap">
-            <Flame className="h-3 w-3 mr-1" />
-            Ít calo
-          </Badge>
-          <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 whitespace-nowrap">
-            <Clock className="h-3 w-3 mr-1" />
-            Nhanh
-          </Badge>
-          <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80 whitespace-nowrap">
-            <Heart className="h-3 w-3 mr-1" />
-            Yêu thích
-          </Badge>
+          </Button>
+          <Button
+            variant={selectedDifficulty === "easy" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedDifficulty(selectedDifficulty === "easy" ? "all" : "easy")}
+          >
+            Dễ
+          </Button>
+          <Button
+            variant={selectedDifficulty === "medium" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedDifficulty(selectedDifficulty === "medium" ? "all" : "medium")}
+          >
+            Trung bình
+          </Button>
         </div>
 
         {/* Dishes Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filteredDishes.map((dish, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {dishes.map((dish, index) => (
             <motion.div
               key={dish.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: index * 0.1 }}
               whileHover={{ y: -4 }}
             >
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all cursor-pointer group h-full">
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={dish.image}
-                    alt={dish.name}
+                    src={dish.imageUrl || "/healthy-salad-bowl-colorful-vegetables.jpg"}
+                    alt={dish.nameVi}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -155,58 +203,76 @@ export default function DishesPage() {
                         </Badge>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="h-8 w-8 p-0 rounded-full"
-                    >
-                      <Heart
-                        className={`h-4 w-4 ${dish.isFavorite ? "fill-red-500 text-red-500" : ""}`}
+                    <div className="flex gap-1">
+                      <QuickHideButton
+                        itemId={`dish-${dish.id}`}
+                        itemName={dish.nameVi}
+                        itemType="meal"
+                        itemImage={dish.imageUrl}
+                        className="h-8 w-8 p-0 rounded-full bg-white/90 hover:bg-white"
                       />
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 p-0 rounded-full"
+                      >
+                        <Heart className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="absolute bottom-3 left-3 right-3">
                     <div className="flex items-center gap-1 text-white">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-bold">{dish.rating}</span>
+                      <span className="text-sm font-bold">{dish.ratingAvg.toFixed(1)}</span>
                     </div>
                   </div>
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="font-bold text-base mb-1 line-clamp-1">{dish.name}</h3>
+                  <h3 className="font-bold text-base mb-1 line-clamp-1">{dish.nameVi}</h3>
                   <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                    {dish.description}
+                    {dish.category.nameVi} • {getMealTypeText(dish.mealType)}
                   </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
                       <Flame className="h-3.5 w-3.5 text-orange-500" />
-                      {dish.calo} calo
+                      {Math.round(dish.calories)} calo
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5 text-blue-500" />
-                      {dish.time}
+                      {dish.prepTimeMinutes + dish.cookTimeMinutes} phút
                     </span>
-                    <Badge variant="outline" className="text-xs">
-                      {dish.difficulty}
+                    <Badge variant="secondary" className="text-[10px]">
+                      {getDifficultyText(dish.difficultyLevel)}
                     </Badge>
                   </div>
-                  <Button className="w-full" size="sm">
-                    <ChefHat className="h-4 w-4 mr-2" />
-                    Xem công thức
-                  </Button>
+                  
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {dish.dishTags.slice(0, 2).map((dishTag) => (
+                      <Badge key={dishTag.tag.id} variant="outline" className="text-[10px]">
+                        {dishTag.tag.nameVi}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <Link href={`/cook/${dish.id}`}>
+                    <Button className="w-full" size="sm">
+                      <ChefHat className="h-4 w-4 mr-2" />
+                      Xem công thức
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </div>
 
-        {filteredDishes.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Không tìm thấy món ăn phù hợp</p>
+        {dishes.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Không tìm thấy món ăn nào</p>
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }
-

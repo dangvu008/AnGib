@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   CommandDialog,
   CommandEmpty,
@@ -28,12 +28,111 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { useUserPreferences } from "@/hooks/useUserPreferences"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [isListening, setIsListening] = useState(false)
+  const [activeTab, setActiveTab] = useState("all")
+  const [searchHistory, setSearchHistory] = useState<string[]>([])
+  const [detectedType, setDetectedType] = useState<string | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
+  const { preferences, filterItems } = useUserPreferences()
+  const { isAuthenticated } = useAuth()
+
+  // Load search history from localStorage
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('angi-search-history')
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory))
+    }
+  }, [])
+
+  // Detect current page context and set appropriate tab
+  useEffect(() => {
+    if (pathname === '/dishes') {
+      setActiveTab('dishes')
+    } else if (pathname === '/menu') {
+      setActiveTab('menus')
+    } else if (pathname === '/restaurants') {
+      setActiveTab('restaurants')
+    } else if (pathname === '/shopping') {
+      setActiveTab('shopping')
+    } else if (pathname === '/weekly-plan') {
+      setActiveTab('planning')
+    } else {
+      setActiveTab('all')
+    }
+  }, [pathname])
+
+  // Smart search type detection
+  const detectSearchType = useCallback((query: string) => {
+    const lowerQuery = query.toLowerCase()
+    
+    // Dish-related keywords
+    const dishKeywords = ['món', 'ăn', 'nấu', 'công thức', 'chế biến', 'nướng', 'xào', 'luộc', 'hấp', 'chiên', 'canh', 'súp', 'salad', 'gỏi']
+    const dishNames = ['bún', 'phở', 'cơm', 'bánh', 'chả', 'nem', 'gỏi', 'canh', 'súp', 'salad', 'pizza', 'pasta', 'sushi']
+    
+    // Restaurant-related keywords
+    const restaurantKeywords = ['nhà hàng', 'quán', 'cửa hàng', 'địa chỉ', 'địa điểm', 'gần đây', 'khu vực', 'quận', 'phường']
+    
+    // Menu/Plan-related keywords
+    const menuKeywords = ['thực đơn', 'kế hoạch', 'lịch', 'tuần', 'ngày', 'bữa', 'sáng', 'trưa', 'tối', 'lunch', 'dinner', 'breakfast']
+    
+    // Shopping-related keywords
+    const shoppingKeywords = ['mua', 'chợ', 'siêu thị', 'nguyên liệu', 'thành phần', 'gia vị', 'rau', 'củ', 'quả', 'thịt', 'cá']
+    
+    // Ingredient-related keywords
+    const ingredientKeywords = ['nguyên liệu', 'thành phần', 'gia vị', 'rau', 'củ', 'quả', 'thịt', 'cá', 'tôm', 'cua', 'đậu', 'nấm']
+    
+    if (dishKeywords.some(keyword => lowerQuery.includes(keyword)) || 
+        dishNames.some(name => lowerQuery.includes(name))) {
+      return 'dishes'
+    }
+    
+    if (restaurantKeywords.some(keyword => lowerQuery.includes(keyword))) {
+      return 'restaurants'
+    }
+    
+    if (menuKeywords.some(keyword => lowerQuery.includes(keyword))) {
+      return 'menus'
+    }
+    
+    if (shoppingKeywords.some(keyword => lowerQuery.includes(keyword))) {
+      return 'shopping'
+    }
+    
+    if (ingredientKeywords.some(keyword => lowerQuery.includes(keyword))) {
+      return 'ingredients'
+    }
+    
+    return null
+  }, [])
+
+  // Update detected type when search changes
+  useEffect(() => {
+    if (search.trim()) {
+      const detected = detectSearchType(search)
+      setDetectedType(detected)
+      if (detected && detected !== activeTab) {
+        setActiveTab(detected)
+      }
+    } else {
+      setDetectedType(null)
+    }
+  }, [search, detectSearchType, activeTab])
+
+  // Save search to history
+  const saveToHistory = useCallback((query: string) => {
+    if (query.trim() && !searchHistory.includes(query.trim())) {
+      const newHistory = [query.trim(), ...searchHistory.slice(0, 4)] // Keep last 5 searches
+      setSearchHistory(newHistory)
+      localStorage.setItem('angi-search-history', JSON.stringify(newHistory))
+    }
+  }, [searchHistory])
 
   // Mock data - sẽ thay bằng API call
   const searchData = {
@@ -48,14 +147,6 @@ export function GlobalSearch() {
       { id: 3, name: "Rau muống xào tỏi", type: "dish", calo: 60, time: "5 phút", tags: ["Chay", "Express"], icon: Utensils },
       { id: 4, name: "Nấm xào rau củ", type: "dish", calo: 150, time: "12 phút", tags: ["Chay"], icon: Utensils },
       { id: 5, name: "Gỏi cuốn chay", type: "dish", calo: 120, time: "10 phút", tags: ["Chay", "Mát"], icon: Utensils },
-      { id: 6, name: "Cà ri chay", type: "dish", calo: 200, time: "25 phút", tags: ["Chay", "Ấm"], icon: Utensils },
-    ],
-    ingredients: [
-      { id: 1, name: "Đậu hũ", type: "ingredient", category: "Đạm", price: "7,500₫/hộp", icon: ShoppingCart },
-      { id: 2, name: "Cà chua", type: "ingredient", category: "Rau củ", price: "40,000₫/kg", icon: ShoppingCart },
-      { id: 3, name: "Bí đỏ", type: "ingredient", category: "Rau củ", price: "18,000₫/kg", icon: ShoppingCart },
-      { id: 4, name: "Nấm hương", type: "ingredient", category: "Đạm", price: "125,000₫/kg", icon: ShoppingCart },
-      { id: 5, name: "Rau muống", type: "ingredient", category: "Rau củ", price: "8,000₫/bó", icon: ShoppingCart },
     ],
     restaurants: [
       { id: 1, name: "Quán Chay Tịnh Tâm", type: "restaurant", rating: 4.9, distance: "0.8 km", price: "40-70k", icon: Store },
@@ -63,6 +154,155 @@ export function GlobalSearch() {
       { id: 3, name: "Cơm Chay An Nhiên", type: "restaurant", rating: 4.6, distance: "2.0 km", price: "35-60k", icon: Store },
     ],
   }
+
+  // Filter data based on active tab, search query, and user preferences
+  const getFilteredData = useCallback(() => {
+    let filteredData = []
+    
+    // Get data based on active tab
+    if (activeTab === "all" || activeTab === "menus") {
+      filteredData = [...filteredData, ...searchData.menus]
+    }
+    if (activeTab === "all" || activeTab === "dishes") {
+      filteredData = [...filteredData, ...searchData.dishes]
+    }
+    if (activeTab === "all" || activeTab === "restaurants") {
+      filteredData = [...filteredData, ...searchData.restaurants]
+    }
+
+    // Apply user preferences filtering if authenticated
+    if (isAuthenticated && preferences && filterItems) {
+      filteredData = filterItems(filteredData, 'dishes')
+    }
+
+    // Apply search query filtering
+    if (search.trim()) {
+      const query = search.toLowerCase()
+      filteredData = filteredData.filter(item => {
+        // Basic name matching
+        const nameMatch = item.name.toLowerCase().includes(query)
+        
+        // Tag matching
+        const tagMatch = item.tags && item.tags.some((tag: string) => 
+          tag.toLowerCase().includes(query)
+        )
+        
+        // Description matching
+        const descMatch = item.description && 
+          item.description.toLowerCase().includes(query)
+        
+        // Ingredient matching
+        const ingredientMatch = item.ingredients && 
+          item.ingredients.some((ingredient: string) => 
+            ingredient.toLowerCase().includes(query)
+          )
+        
+        // Category matching
+        const categoryMatch = item.category && 
+          item.category.toLowerCase().includes(query)
+        
+        return nameMatch || tagMatch || descMatch || ingredientMatch || categoryMatch
+      })
+    }
+
+    return filteredData
+  }, [activeTab, search, isAuthenticated, preferences, filterItems])
+
+  // Get context-aware suggestions
+  const getContextSuggestions = useCallback(() => {
+    const baseSuggestions = {
+      all: {
+        title: "Tìm kiếm phổ biến",
+        suggestions: [
+          { query: "món chay", icon: Leaf, badge: "Chay" },
+          { query: "ăn sáng", icon: Clock, badge: "Thời gian" },
+          { query: "món Việt", icon: ChefHat, badge: "Quốc gia" },
+          { query: "canh chua", icon: Utensils, badge: "Món ăn" },
+          { query: "bún bò", icon: Flame, badge: "Phổ biến" },
+        ]
+      },
+      dishes: {
+        title: "Gợi ý món ăn",
+        suggestions: [
+          { query: "món chay dễ nấu", icon: Leaf, badge: "Dễ" },
+          { query: "canh chua", icon: Utensils, badge: "Canh" },
+          { query: "bún chay", icon: Flame, badge: "Bún" },
+          { query: "rau xào", icon: ChefHat, badge: "Xào" },
+          { query: "đậu hũ", icon: Leaf, badge: "Chay" },
+        ]
+      },
+      menus: {
+        title: "Gợi ý thực đơn",
+        suggestions: [
+          { query: "thực đơn chay 7 ngày", icon: Calendar, badge: "Tuần" },
+          { query: "ăn sáng healthy", icon: Clock, badge: "Sáng" },
+          { query: "lunch văn phòng", icon: Utensils, badge: "Trưa" },
+          { query: "dinner gia đình", icon: ChefHat, badge: "Tối" },
+          { query: "meal prep", icon: Calendar, badge: "Chuẩn bị" },
+        ]
+      },
+      restaurants: {
+        title: "Gợi ý nhà hàng",
+        suggestions: [
+          { query: "quán chay gần đây", icon: MapPin, badge: "Gần" },
+          { query: "nhà hàng chay", icon: Store, badge: "Chay" },
+          { query: "quán ăn vặt", icon: Utensils, badge: "Vặt" },
+          { query: "restaurant view đẹp", icon: Store, badge: "View" },
+          { query: "buffet chay", icon: ChefHat, badge: "Buffet" },
+        ]
+      },
+      shopping: {
+        title: "Gợi ý mua sắm",
+        suggestions: [
+          { query: "nguyên liệu nấu canh", icon: ShoppingCart, badge: "Canh" },
+          { query: "rau củ tươi", icon: Leaf, badge: "Tươi" },
+          { query: "gia vị cơ bản", icon: Utensils, badge: "Gia vị" },
+          { query: "đậu phụ", icon: Leaf, badge: "Chay" },
+          { query: "nấm các loại", icon: ChefHat, badge: "Nấm" },
+        ]
+      },
+      planning: {
+        title: "Gợi ý kế hoạch",
+        suggestions: [
+          { query: "kế hoạch tuần", icon: Calendar, badge: "Tuần" },
+          { query: "meal prep", icon: Clock, badge: "Chuẩn bị" },
+          { query: "thực đơn giảm cân", icon: Leaf, badge: "Giảm cân" },
+          { query: "ăn healthy", icon: ChefHat, badge: "Healthy" },
+          { query: "lịch nấu ăn", icon: Calendar, badge: "Lịch" },
+        ]
+      }
+    }
+
+    return baseSuggestions[activeTab as keyof typeof baseSuggestions] || baseSuggestions.all
+  }, [activeTab])
+
+  // Get context-aware search placeholder
+  const getSearchPlaceholder = useCallback(() => {
+    const placeholders = {
+      all: "Tìm thực đơn, món ăn, nguyên liệu, nhà hàng...",
+      dishes: "Tìm món ăn, công thức, nguyên liệu...",
+      menus: "Tìm thực đơn, kế hoạch bữa ăn...",
+      restaurants: "Tìm nhà hàng, quán ăn gần đây...",
+      shopping: "Tìm nguyên liệu, gia vị cần mua...",
+      planning: "Tìm kế hoạch, lịch nấu ăn...",
+    }
+    
+    return placeholders[activeTab as keyof typeof placeholders] || placeholders.all
+  }, [activeTab])
+
+  // Get context-aware label for search button
+  const getContextLabel = useCallback(() => {
+    const labels = {
+      all: "Tìm kiếm...",
+      dishes: "Tìm món ăn...",
+      menus: "Tìm thực đơn...",
+      restaurants: "Tìm nhà hàng...",
+      shopping: "Tìm mua sắm...",
+      planning: "Tìm kế hoạch...",
+    }
+    
+    return labels[activeTab as keyof typeof labels] || labels.all
+  }, [activeTab])
 
   // Keyboard shortcut Cmd+K / Ctrl+K
   useEffect(() => {
@@ -95,20 +335,23 @@ export function GlobalSearch() {
 
     recognition.onstart = () => {
       setIsListening(true)
-      toast.info("🎤 Đang lắng nghe...", {
-        description: "Hãy nói tên món ăn hoặc nguyên liệu"
+      toast.info("Đang nghe...", {
+        description: "Nói từ khóa tìm kiếm của bạn"
       })
     }
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript
       setSearch(transcript)
-      toast.success(`Đã nghe: "${transcript}"`)
+      saveToHistory(transcript)
+      toast.success("Đã nhận diện giọng nói", {
+        description: `Tìm kiếm: "${transcript}"`
+      })
     }
 
     recognition.onerror = (event: any) => {
-      setIsListening(false)
-      toast.error("Lỗi voice search", {
+      console.error("Speech recognition error:", event.error)
+      toast.error("Lỗi nhận diện giọng nói", {
         description: event.error
       })
     }
@@ -118,41 +361,29 @@ export function GlobalSearch() {
     }
 
     recognition.start()
-  }, [])
-
-  // Filter results
-  const filterResults = (data: any[], query: string) => {
-    if (!query) return data
-    return data.filter((item) =>
-      item.name.toLowerCase().includes(query.toLowerCase())
-    )
-  }
-
-  const filteredMenus = filterResults(searchData.menus, search)
-  const filteredDishes = filterResults(searchData.dishes, search)
-  const filteredIngredients = filterResults(searchData.ingredients, search)
-  const filteredRestaurants = filterResults(searchData.restaurants, search)
+  }, [saveToHistory])
 
   const handleSelect = (type: string, item: any) => {
     setOpen(false)
-    setSearch("")
+    saveToHistory(search)
     
     switch (type) {
       case "menu":
         router.push("/menu")
-        toast.success(`Đã chọn: ${item.name}`)
+        toast.success("Đã chọn thực đơn", {
+          description: item.name
+        })
         break
       case "dish":
-        router.push("/dishes")
-        toast.success(`Đã chọn món: ${item.name}`)
-        break
-      case "ingredient":
-        router.push("/shopping")
-        toast.success(`Đã thêm vào giỏ: ${item.name}`)
+        router.push(`/cook/${item.id}`)
+        toast.success("Đã chọn món ăn", {
+          description: item.name
+        })
         break
       case "restaurant":
-        toast.info("🍜 Đang mở bản đồ...", {
-          description: `${item.name} - ${item.distance}`
+        router.push("/restaurants")
+        toast.success("Đã chọn nhà hàng", {
+          description: item.name
         })
         break
     }
@@ -161,29 +392,36 @@ export function GlobalSearch() {
   return (
     <>
       {/* Search Trigger Button */}
-      <Button
-        variant="outline"
-        className="relative justify-start text-sm text-muted-foreground h-9 md:h-10 w-32 md:w-64 pr-3"
-        onClick={() => setOpen(true)}
-      >
-        <Search className="mr-2 h-4 w-4" />
-        <span className="hidden md:inline">Tìm kiếm...</span>
-        <span className="md:hidden">Tìm...</span>
-        <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </Button>
+              <Button
+                variant="outline"
+                className="relative justify-start text-sm text-muted-foreground h-9 md:h-10 w-32 md:w-64 pr-3"
+                onClick={() => setOpen(true)}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                <span className="hidden md:inline">
+                  {activeTab === 'all' ? 'Tìm kiếm...' : getContextLabel()}
+                </span>
+                <span className="md:hidden">Tìm...</span>
+                {detectedType && (
+                  <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                    AI
+                  </Badge>
+                )}
+                <kbd className="pointer-events-none absolute right-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </Button>
 
       {/* Command Dialog */}
       <CommandDialog open={open} onOpenChange={setOpen}>
         <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-          <CommandInput
-            placeholder="Tìm thực đơn, món ăn, nguyên liệu, nhà hàng..."
-            value={search}
-            onValueChange={setSearch}
-            className="flex-1"
-          />
+                  <CommandInput
+                    placeholder={getSearchPlaceholder()}
+                    value={search}
+                    onValueChange={setSearch}
+                    className="flex-1"
+                  />
           <Button
             variant="ghost"
             size="sm"
@@ -196,6 +434,77 @@ export function GlobalSearch() {
         </div>
 
         <CommandList>
+                  {/* Filter Tabs */}
+                  <div className="flex items-center gap-1 p-2 border-b">
+                    {[
+                      { id: "all", label: "Tất cả", icon: Search },
+                      { id: "dishes", label: "Món ăn", icon: Utensils },
+                      { id: "menus", label: "Thực đơn", icon: Calendar },
+                      { id: "restaurants", label: "Nhà hàng", icon: Store },
+                      { id: "shopping", label: "Mua sắm", icon: ShoppingCart },
+                      { id: "planning", label: "Kế hoạch", icon: Clock },
+                    ].map((tab) => (
+                      <Button
+                        key={tab.id}
+                        variant={activeTab === tab.id ? "default" : "ghost"}
+                        size="sm"
+                        className="h-8 px-3 text-xs"
+                        onClick={() => setActiveTab(tab.id)}
+                      >
+                        <tab.icon className="h-3 w-3 mr-1" />
+                        {tab.label}
+                        {detectedType === tab.id && (
+                          <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                            AI
+                          </Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+
+          {/* Search History */}
+          {!search && searchHistory.length > 0 && (
+            <CommandGroup heading="Tìm kiếm gần đây">
+              {searchHistory.map((query, index) => (
+                <CommandItem
+                  key={index}
+                  onSelect={() => {
+                    setSearch(query)
+                    saveToHistory(query)
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>{query}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+                  {/* Smart Suggestions based on context */}
+                  {!search && (
+                    <CommandGroup heading={getContextSuggestions().title}>
+                      {getContextSuggestions().suggestions.map((suggestion, index) => (
+                        <CommandItem
+                          key={index}
+                          onSelect={() => {
+                            setSearch(suggestion.query)
+                            saveToHistory(suggestion.query)
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <suggestion.icon className="mr-2 h-4 w-4" />
+                          <span>{suggestion.query}</span>
+                          {suggestion.badge && (
+                            <Badge variant="outline" className="ml-auto text-[10px]">
+                              {suggestion.badge}
+                            </Badge>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+
           <CommandEmpty>
             <div className="py-6 text-center">
               <Search className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
@@ -204,129 +513,78 @@ export function GlobalSearch() {
             </div>
           </CommandEmpty>
 
-          {/* Menus */}
-          {filteredMenus.length > 0 && (
-            <>
-              <CommandGroup heading="📋 Thực đơn">
-                {filteredMenus.map((menu) => (
-                  <CommandItem
-                    key={menu.id}
-                    onSelect={() => handleSelect("menu", menu)}
-                    className="flex items-center gap-3 py-3"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-chart-1/10 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="h-4 w-4 text-chart-1" />
+          {/* Search Results */}
+          {search && getFilteredData().length > 0 && (
+            <CommandGroup heading={`Kết quả tìm kiếm (${getFilteredData().length})`}>
+              {getFilteredData().map((item) => (
+                <CommandItem
+                  key={`${item.type}-${item.id}`}
+                  onSelect={() => {
+                    handleSelect(item.type, item)
+                    saveToHistory(search)
+                  }}
+                  className="flex items-center gap-3 py-3"
+                >
+                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    item.type === 'menu' ? 'bg-chart-1/10' :
+                    item.type === 'dish' ? 'bg-chart-2/10' :
+                    'bg-chart-4/10'
+                  }`}>
+                    <item.icon className={`h-4 w-4 ${
+                      item.type === 'menu' ? 'text-chart-1' :
+                      item.type === 'dish' ? 'text-chart-2' :
+                      'text-chart-4'
+                    }`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-sm">{item.name}</p>
+                      {item.tags && item.tags.includes("Chay") && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          <Leaf className="h-2.5 w-2.5 mr-0.5" />
+                          Chay
+                        </Badge>
+                      )}
+                      {item.rating && (
+                        <span className="text-xs">⭐ {item.rating}</span>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{menu.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {menu.meals} bữa • {menu.calo} calo/ngày
-                      </p>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <CommandSeparator />
-            </>
-          )}
-
-          {/* Dishes */}
-          {filteredDishes.length > 0 && (
-            <>
-              <CommandGroup heading="🍲 Món ăn">
-                {filteredDishes.map((dish) => (
-                  <CommandItem
-                    key={dish.id}
-                    onSelect={() => handleSelect("dish", dish)}
-                    className="flex items-center gap-3 py-3"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-chart-2/10 flex items-center justify-center flex-shrink-0">
-                      <ChefHat className="h-4 w-4 text-chart-2" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm">{dish.name}</p>
-                        {dish.tags.includes("Chay") && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            <Leaf className="h-2.5 w-2.5 mr-0.5" />
-                            Chay
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {item.calo && (
                         <span className="flex items-center gap-1">
-                          <Flame className="h-3 w-3 text-orange-500" />
-                          {dish.calo} calo
+                          <Flame className="h-3 w-3" />
+                          {item.calo} calo
                         </span>
+                      )}
+                      {item.time && (
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-blue-500" />
-                          {dish.time}
+                          <Clock className="h-3 w-3" />
+                          {item.time}
                         </span>
-                      </div>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <CommandSeparator />
-            </>
-          )}
-
-          {/* Ingredients */}
-          {filteredIngredients.length > 0 && (
-            <>
-              <CommandGroup heading="🥕 Nguyên liệu">
-                {filteredIngredients.map((ingredient) => (
-                  <CommandItem
-                    key={ingredient.id}
-                    onSelect={() => handleSelect("ingredient", ingredient)}
-                    className="flex items-center gap-3 py-3"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-chart-3/10 flex items-center justify-center flex-shrink-0">
-                      <ShoppingCart className="h-4 w-4 text-chart-3" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{ingredient.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {ingredient.category} • {ingredient.price}
-                      </p>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <CommandSeparator />
-            </>
-          )}
-
-          {/* Restaurants */}
-          {filteredRestaurants.length > 0 && (
-            <>
-              <CommandGroup heading="🏪 Nhà hàng">
-                {filteredRestaurants.map((restaurant) => (
-                  <CommandItem
-                    key={restaurant.id}
-                    onSelect={() => handleSelect("restaurant", restaurant)}
-                    className="flex items-center gap-3 py-3"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-chart-4/10 flex items-center justify-center flex-shrink-0">
-                      <Store className="h-4 w-4 text-chart-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm">{restaurant.name}</p>
-                        <span className="text-xs">⭐ {restaurant.rating}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      )}
+                      {item.distance && (
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {restaurant.distance}
+                          {item.distance}
                         </span>
-                        <span>{restaurant.price}</span>
-                      </div>
+                      )}
+                      {item.price && (
+                        <span>{item.price}</span>
+                      )}
+                      {item.tags && (
+                        <div className="flex gap-1">
+                          {item.tags.slice(0, 2).map((tag: string, index: number) => (
+                            <Badge key={index} variant="outline" className="text-[10px] px-1.5 py-0">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
           )}
 
           {/* Quick Actions */}
@@ -348,7 +606,7 @@ export function GlobalSearch() {
                 }}
               >
                 <Utensils className="mr-3 h-4 w-4" />
-                Khám phá món ăn
+                Xem tất cả món ăn
               </CommandItem>
               <CommandItem
                 onSelect={() => {
@@ -362,44 +620,16 @@ export function GlobalSearch() {
               <CommandItem
                 onSelect={() => {
                   setOpen(false)
-                  toast.info("🎲 Đang tạo thực đơn ngẫu nhiên...")
+                  router.push("/weekly-plan")
                 }}
               >
-                <TrendingUp className="mr-3 h-4 w-4" />
-                Tạo thực đơn ngẫu nhiên
+                <ChefHat className="mr-3 h-4 w-4" />
+                Kế hoạch tuần
               </CommandItem>
             </CommandGroup>
           )}
         </CommandList>
-
-        {/* Footer */}
-        <div className="border-t px-4 py-2 text-xs text-muted-foreground flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 inline-flex">
-                ↵
-              </kbd>
-              <span>Chọn</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 inline-flex">
-                ESC
-              </kbd>
-              <span>Đóng</span>
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 gap-1 text-xs"
-            onClick={startVoiceSearch}
-          >
-            <Mic className={`h-3 w-3 ${isListening ? "text-red-500 animate-pulse" : ""}`} />
-            Voice
-          </Button>
-        </div>
       </CommandDialog>
     </>
   )
 }
-

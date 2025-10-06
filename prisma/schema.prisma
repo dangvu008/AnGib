@@ -1,0 +1,425 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  fullName  String
+  avatarUrl String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  preferences     UserPreferences?
+  mealPlans       MealPlan[]
+  shoppingLists   ShoppingList[]
+  reviews         UserReview[]
+  favorites       UserFavorite[]
+  nutritionLogs   NutritionLog[]
+  expenseLogs     ExpenseLog[]
+  aiRecommendations AIRecommendation[]
+
+  @@map("users")
+}
+
+model UserPreferences {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  dietaryType         String   @default("omnivore") // omnivore, vegetarian, vegan, pescatarian
+  allergies           String   @default("[]")
+  healthGoals         String   @default("[]")
+  dailyCalorieTarget  Int?
+  dailyProteinTarget  Float?
+  weeklyBudget        Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  nameVi      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  dishes Dish[]
+
+  @@map("categories")
+}
+
+model Ingredient {
+  id           String   @id @default(cuid())
+  name         String
+  nameVi       String
+  category     String
+  unit         String
+  caloriesPerUnit Float
+  proteinPerUnit   Float
+  avgPrice     Float?
+  isVegetarian Boolean  @default(true)
+  isVegan      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  dishIngredients     DishIngredient[]
+  shoppingListItems   ShoppingListItem[]
+
+  @@map("ingredients")
+}
+
+model Dish {
+  id                String   @id @default(cuid())
+  name              String
+  nameVi            String
+  categoryId        String
+  mealType          String   // breakfast, lunch, dinner, snack
+  cuisineType       String?
+  difficultyLevel   String   @default("easy") // easy, medium, hard
+  prepTimeMinutes   Int
+  cookTimeMinutes   Int
+  servings          Int
+  calories          Float
+  protein           Float
+  carbs             Float
+  fat               Float
+  estimatedCost     Float?
+  isVegetarian      Boolean  @default(false)
+  isVegan           Boolean  @default(false)
+  imageUrl          String?
+  instructions      String?
+  popularityScore   Float    @default(0)
+  
+  // Vietnamese meal structure
+  dishType          String   @default("main") // main, soup, stir_fry, side, rice, noodle_soup
+  isStandaloneDish  Boolean  @default(false) // true for pho, bun, etc. (eaten alone)
+  isRiceAccompanied Boolean  @default(true)  // true for dishes eaten with rice
+  vietnameseStyle   Boolean  @default(false) // true for traditional Vietnamese dishes
+  ratingAvg         Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  category          Category @relation(fields: [categoryId], references: [id])
+  dishIngredients   DishIngredient[]
+  dishTags          DishTag[]
+  mealPlanItems     MealPlanItem[]
+  mealItems         MealItem[]
+  restaurantDishes  RestaurantDish[]
+  nutritionLogs     NutritionLog[]
+  aiRecommendations AIRecommendation[]
+
+  @@map("dishes")
+}
+
+model DishIngredient {
+  id           String   @id @default(cuid())
+  dishId       String
+  ingredientId String
+  quantity     Float
+  unit         String
+  isOptional   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  dish       Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, ingredientId])
+  @@map("dish_ingredients")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  nameVi    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  dishTags DishTag[]
+
+  @@map("tags")
+}
+
+model DishTag {
+  id     String @id @default(cuid())
+  dishId String
+  tagId  String
+
+  // Relations
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, tagId])
+  @@map("dish_tags")
+}
+
+model MealComposition {
+  id          String   @id @default(cuid())
+  name        String
+  nameVi      String
+  description String?
+  mealType    String   // breakfast, lunch, dinner
+  cuisineType String   @default("vietnamese")
+  totalCalories Float
+  totalCost   Float?
+  prepTimeMinutes Int
+  servings    Int
+  isVegetarian Boolean @default(false)
+  isVegan     Boolean @default(false)
+  imageUrl    String?
+  popularityScore Float @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  mealItems   MealItem[]
+  mealPlanItems MealPlanItem[]
+
+  @@map("meal_compositions")
+}
+
+model MealItem {
+  id                String   @id @default(cuid())
+  mealCompositionId String
+  dishId            String
+  dishType          String   // main, soup, stir_fry, side, rice, noodle_soup
+  quantity          Int      @default(1)
+  isRequired        Boolean  @default(true)
+  order             Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  // Relations
+  mealComposition MealComposition @relation(fields: [mealCompositionId], references: [id], onDelete: Cascade)
+  dish            Dish            @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([mealCompositionId, dishId])
+  @@map("meal_items")
+}
+
+model MealPlan {
+  id             String   @id @default(cuid())
+  userId         String
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  totalDays      Int
+  status         String   @default("draft") // draft, active, completed, cancelled
+  targetCalories Float?
+  targetBudget   Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealPlanItems MealPlanItem[]
+  shoppingLists ShoppingList[]
+
+  @@map("meal_plans")
+}
+
+model MealPlanItem {
+  id                String   @id @default(cuid())
+  mealPlanId        String
+  dishId            String?
+  mealCompositionId String?
+  mealDate          DateTime
+  mealTime          String   // breakfast, lunch, dinner, snack
+  servings          Int      @default(1)
+  isCompleted       Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  mealPlan        MealPlan         @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  dish            Dish?            @relation(fields: [dishId], references: [id])
+  mealComposition MealComposition? @relation(fields: [mealCompositionId], references: [id])
+
+  @@map("meal_plan_items")
+}
+
+model ShoppingList {
+  id            String   @id @default(cuid())
+  userId        String
+  mealPlanId    String?
+  name          String
+  shoppingDate  DateTime
+  estimatedTotal Float?
+  actualTotal   Float?
+  status        String   @default("pending") // pending, shopping, completed, cancelled
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealPlan        MealPlan?           @relation(fields: [mealPlanId], references: [id])
+  shoppingListItems ShoppingListItem[]
+
+  @@map("shopping_lists")
+}
+
+model ShoppingListItem {
+  id             String   @id @default(cuid())
+  shoppingListId String
+  ingredientId   String
+  quantity       Float
+  unit           String
+  estimatedPrice Float?
+  actualPrice    Float?
+  isPurchased    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  shoppingList ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient   @relation(fields: [ingredientId], references: [id])
+
+  @@map("shopping_list_items")
+}
+
+model Restaurant {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  cuisineType    String
+  address        String
+  latitude       Float?
+  longitude      Float?
+  phone          String?
+  priceRange     String?  // $, $$, $$$, $$$$
+  priceMin       Float?
+  priceMax       Float?
+  ratingAvg      Float    @default(0)
+  isVegetarian   Boolean  @default(false)
+  isVegan        Boolean  @default(false)
+  openingHours   String?
+  imageUrl       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  restaurantDishes RestaurantDish[]
+
+  @@map("restaurants")
+}
+
+model RestaurantDish {
+  id           String   @id @default(cuid())
+  restaurantId String
+  dishId       String
+  name         String
+  description  String?
+  price        Float
+  isAvailable  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  dish       Dish       @relation(fields: [dishId], references: [id])
+
+  @@map("restaurant_dishes")
+}
+
+model UserReview {
+  id             String   @id @default(cuid())
+  userId         String
+  reviewableType String   // dish, restaurant
+  reviewableId   String
+  rating         Int      // 1-5
+  reviewText     String?
+  images         String   @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewableType, reviewableId])
+  @@map("user_reviews")
+}
+
+model UserFavorite {
+  id             String   @id @default(cuid())
+  userId         String
+  favorableType  String   // dish, restaurant
+  favorableId    String
+  createdAt      DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, favorableType, favorableId])
+  @@map("user_favorites")
+}
+
+model NutritionLog {
+  id        String   @id @default(cuid())
+  userId    String
+  logDate   DateTime
+  mealTime  String   // breakfast, lunch, dinner, snack
+  dishId    String
+  calories  Float
+  protein   Float
+  carbs     Float
+  fat       Float
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dish Dish @relation(fields: [dishId], references: [id])
+
+  @@map("nutrition_logs")
+}
+
+model ExpenseLog {
+  id            String   @id @default(cuid())
+  userId        String
+  expenseDate   DateTime
+  expenseType   String   // grocery, restaurant, delivery
+  amount        Float
+  description   String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expense_logs")
+}
+
+model AIRecommendation {
+  id                 String    @id @default(cuid())
+  userId             String
+  dishId             String
+  recommendationType String    // daily, weekly, seasonal, dietary
+  reason             String?
+  score              Float
+  isViewed           Boolean   @default(false)
+  isAccepted         Boolean   @default(false)
+  expiresAt          DateTime?
+  createdAt          DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dish Dish @relation(fields: [dishId], references: [id])
+
+  @@map("ai_recommendations")
+}

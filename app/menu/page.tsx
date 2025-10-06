@@ -18,6 +18,8 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { AppHeader } from "@/components/AppHeader"
+import { ShareButton } from "@/components/ShareButton"
+import { QuickHideButton } from "@/components/HideButton"
 import { useState } from "react"
 import { toast } from "sonner"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -215,6 +217,31 @@ export default function MenuPage() {
                       <ChefHat className="h-4 w-4 mr-2" />
                       Áp dụng
                     </Button>
+                    <ShareButton
+                      content={{
+                        title: plan.name,
+                        description: plan.description,
+                        type: 'menu',
+                        data: {
+                          days: plan.days,
+                          totalMeals: plan.totalMeals,
+                          calories: plan.calories,
+                          tags: plan.tags,
+                          schedule: plan.schedule,
+                          mainDishes: plan.schedule.map(day => day.lunch),
+                          sideDishes: plan.schedule.map(day => day.breakfast),
+                          totalCalories: plan.calories
+                        }
+                      }}
+                      size="sm"
+                      variant="outline"
+                    />
+                    <QuickHideButton
+                      itemId={plan.id}
+                      itemName={plan.name}
+                      itemType="meal"
+                      itemImage={plan.image}
+                    />
                     <Button 
                       variant="outline" 
                       size="sm"

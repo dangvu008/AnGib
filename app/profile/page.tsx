@@ -18,7 +18,8 @@ import {
   LogOut,
   Edit3,
   Flame,
-  Target
+  Target,
+  Leaf
 } from "lucide-react"
 import { AppHeader } from "@/components/AppHeader"
 import { useState, useEffect } from "react"
@@ -203,7 +204,7 @@ export default function ProfilePage() {
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-muted-foreground">Ngân sách</span>
-                      <span className="font-bold">850k / 1,200k</span>
+                      <span className="font-bold">850,000₫ / 1,200,000₫</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-chart-3 to-chart-5 rounded-full" style={{ width: "71%" }} />

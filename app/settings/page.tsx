@@ -19,6 +19,9 @@ import {
   Trash2
 } from "lucide-react"
 import { AppHeader } from "@/components/AppHeader"
+import { HiddenItemsManager } from "@/components/HiddenItemsManager"
+import { UserPreferencesFilter } from "@/components/UserPreferencesFilter"
+import { formatCurrency } from "@/lib/currency"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 
@@ -453,7 +456,7 @@ export default function SettingsPage() {
                   step="100000"
                 />
                 <p className="text-xs text-muted-foreground mt-2">
-                  Bạn sẽ nhận cảnh báo khi chi tiêu vượt {Math.round(settings.weeklyBudget * 0.8).toLocaleString()}₫ (80%)
+                  Bạn sẽ nhận cảnh báo khi chi tiêu vượt {formatCurrency(Math.round(settings.weeklyBudget * 0.8))} (80%)
                 </p>
               </div>
             </CardContent>
@@ -494,6 +497,38 @@ export default function SettingsPage() {
                   Xóa tất cả dữ liệu
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* User Preferences Filter */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <ChefHat className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg">Tùy chọn lọc</h2>
+                  <p className="text-sm text-muted-foreground">Quản lý nguyên liệu và món ăn không mong muốn</p>
+                </div>
+              </div>
+              <UserPreferencesFilter />
+            </CardContent>
+          </Card>
+
+          {/* Hidden Items Manager */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Trash2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg">Món ăn đã ẩn</h2>
+                  <p className="text-sm text-muted-foreground">Quản lý những món ăn bạn đã ẩn khỏi gợi ý</p>
+                </div>
+              </div>
+              <HiddenItemsManager />
             </CardContent>
           </Card>
 
