@@ -31,6 +31,7 @@ import Link from "next/link"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
+import { ClientOnly } from "@/components/ClientOnly"
 
 export function AppHeader() {
   const pathname = usePathname()
@@ -185,26 +186,32 @@ export function AppHeader() {
             </SheetContent>
           </Sheet>
 
-          {/* User Profile */}
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="relative h-9 md:h-10 w-9 md:w-auto px-1 md:px-3 gap-2 hover:bg-primary/10 transition-all duration-200 group"
-                >
-                  <div className="relative">
-                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-background group-hover:scale-105 transition-transform">
-                      {user?.name?.charAt(0) || "U"}
+          {/* User Profile - Wrapped in ClientOnly to prevent hydration mismatch */}
+          <ClientOnly fallback={
+            <Button variant="ghost" className="h-9 md:h-10 w-9 md:w-auto px-1 md:px-3 gap-2">
+              <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-muted animate-pulse" />
+              <span className="hidden md:inline w-20 h-4 bg-muted animate-pulse rounded" />
+            </Button>
+          }>
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative h-9 md:h-10 w-9 md:w-auto px-1 md:px-3 gap-2 hover:bg-primary/10 transition-all duration-200 group"
+                  >
+                    <div className="relative">
+                      <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-gradient-to-br from-primary to-chart-1 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-background group-hover:scale-105 transition-transform">
+                        {user?.name?.charAt(0) || "U"}
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 md:h-3.5 md:w-3.5 rounded-full bg-chart-2 border-2 border-background flex items-center justify-center">
+                        <Leaf className="h-1.5 w-1.5 md:h-2 md:w-2 text-white" />
+                      </div>
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 md:h-3.5 md:w-3.5 rounded-full bg-chart-2 border-2 border-background flex items-center justify-center">
-                      <Leaf className="h-1.5 w-1.5 md:h-2 md:w-2 text-white" />
-                    </div>
-                  </div>
-                  <span className="hidden md:inline text-sm font-medium group-hover:text-primary transition-colors">{user?.name || "User"}</span>
-                  <ChevronDown className="hidden md:inline h-3 w-3 ml-1 group-hover:rotate-180 transition-transform" />
-                </Button>
-              </DropdownMenuTrigger>
+                    <span className="hidden md:inline text-sm font-medium group-hover:text-primary transition-colors">{user?.name || "User"}</span>
+                    <ChevronDown className="hidden md:inline h-3 w-3 ml-1 group-hover:rotate-180 transition-transform" />
+                  </Button>
+                </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
               <DropdownMenuLabel className="pb-3">
                 <div className="flex items-center gap-3">
@@ -270,14 +277,15 @@ export function AppHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          ) : (
-            <Link href="/login">
-              <Button className="gap-2">
-                <User className="h-4 w-4" />
-                <span className="hidden md:inline">Đăng nhập</span>
-              </Button>
-            </Link>
-          )}
+            ) : (
+              <Link href="/login">
+                <Button className="gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="hidden md:inline">Đăng nhập</span>
+                </Button>
+              </Link>
+            )}
+          </ClientOnly>
         </nav>
       </div>
     </header>
