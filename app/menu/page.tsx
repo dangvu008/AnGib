@@ -8,7 +8,6 @@ import {
   Calendar, 
   Clock, 
   Flame,
-  Plus,
   TrendingUp,
   Leaf,
   ChefHat,
@@ -32,6 +31,7 @@ export default function MenuPage() {
   const [applyingMenu, setApplyingMenu] = useState<any>(null)
   const [startDate, setStartDate] = useState(new Date())
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [cartMenuIds, setCartMenuIds] = useState<string[]>([])
 
   const mealPlans = [
     {
@@ -116,6 +116,49 @@ export default function MenuPage() {
     })
     
     setApplyingMenu(null)
+  }
+
+  // Load items from localStorage shopping list to determine if menu already referenced
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("angi-shopping-list")
+      if (!saved) return
+      const items = JSON.parse(saved) as Array<any>
+      const ids = (items || [])
+        .map((i: any) => i.sourceMenuId)
+        .filter(Boolean)
+      setCartMenuIds(Array.from(new Set(ids)))
+    } catch {}
+  }, [])
+
+  const handleAddToCart = (menu: any) => {
+    try {
+      const saved = localStorage.getItem("angi-shopping-list")
+      const list = saved ? JSON.parse(saved) : []
+      const already = list.some((i: any) => i.sourceMenuId === String(menu.id))
+      if (already) {
+        toast.info("Thực đơn đã có trong giỏ", {
+          description: "Bạn có muốn tăng số lượng hoặc chỉnh sửa trong trang Đi chợ?"
+        })
+        return
+      }
+      // Just mark a lightweight entry as a reminder; actual ingredients are picked in dialog
+      list.push({
+        id: Date.now(),
+        name: `Thực đơn: ${menu.name}`,
+        quantity: "1",
+        price: 0,
+        category: "Khác",
+        checked: false,
+        note: "Từ thực đơn",
+        sourceMenuId: String(menu.id)
+      })
+      localStorage.setItem("angi-shopping-list", JSON.stringify(list))
+      setCartMenuIds((prev) => Array.from(new Set([...prev, String(menu.id)])))
+      toast.success("Đã thêm thực đơn vào giỏ")
+    } catch {
+      toast.error("Không thể cập nhật giỏ")
+    }
   }
 
   return (
@@ -232,14 +275,15 @@ export default function MenuPage() {
                       Áp dụng
                     </Button>
                     <Button 
-                      variant="outline"
+                      variant={cartMenuIds.includes(String(plan.id)) ? "secondary" : "outline"}
                       size="sm" 
                       className="h-10 px-4 gap-2"
-                      onClick={() => setShowAddDialog(true)}
+                      onClick={() => handleAddToCart(plan)}
                     >
                       <ShoppingCart className="h-4 w-4" />
-                      <Plus className="h-4 w-4" />
-                      <span className="hidden md:inline">Thêm vào</span>
+                      <span className="hidden md:inline">
+                        {cartMenuIds.includes(String(plan.id)) ? "Đã có" : "Giỏ"}
+                      </span>
                     </Button>
 
                     {/* Secondary actions */}
