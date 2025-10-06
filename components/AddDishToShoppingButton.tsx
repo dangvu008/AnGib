@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -47,12 +47,31 @@ export function AddDishToShoppingButton({
 }: AddDishToShoppingButtonProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [isAdded, setIsAdded] = useState(false)
+  const [isInCart, setIsInCart] = useState(false)
+
+  // Determine if this dish already exists in shopping list (by sourceDishId)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("angi-shopping-list")
+      if (!saved) return
+      const list = JSON.parse(saved) as Array<any>
+      const exists = (list || []).some((i: any) => i.sourceDishId === dish.id)
+      setIsInCart(exists)
+      if (exists) setIsAdded(true)
+    } catch {}
+  }, [dish.id])
 
   const handleAddToShopping = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    if (isAdding || isAdded) return
+    if (isAdding) return
+    if (isInCart) {
+      toast.info("Món này đã có trong giỏ", {
+        description: "Bạn có thể tăng số lượng trong trang Đi chợ"
+      })
+      return
+    }
 
     setIsAdding(true)
 
@@ -126,7 +145,8 @@ export function AddDishToShoppingButton({
             price: ing.price || 0,
             category: getCategoryFromIngredient(ing.name),
             checked: false,
-            note: `Cho bữa: ${dish.name}`
+            note: `Cho bữa: ${dish.name}`,
+            sourceDishId: dish.id
           })
           addedCount++
         }
@@ -141,6 +161,7 @@ export function AddDishToShoppingButton({
 
       // Save to localStorage
       localStorage.setItem("angi-shopping-list", JSON.stringify(updatedList))
+      setIsInCart(true)
 
       // Success feedback
       const totalPrice = dish.estimatedCost || ingredientsToAdd.reduce((sum, ing) => sum + (ing.price || 0), 0)
@@ -177,7 +198,7 @@ export function AddDishToShoppingButton({
 
   const buttonContent = (
     <>
-      {isAdded ? (
+      {isAdded || isInCart ? (
         <Check className="h-4 w-4 text-green-600" />
       ) : (
         <ShoppingCart className="h-4 w-4" />
