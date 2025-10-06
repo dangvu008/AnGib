@@ -27,6 +27,7 @@ import { motion } from "framer-motion"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
+import { AddDishToShoppingButton } from "@/components/AddDishToShoppingButton"
 
 interface Dish {
   id: string
@@ -307,12 +308,25 @@ export default function HomePage() {
                       ))}
                     </div>
 
-                    <Link href={`/cook/${dish.id}`}>
-                      <Button className="w-full" size="sm">
-                        <ChefHat className="h-4 w-4 mr-2" />
-                        Xem công thức
-                      </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      <AddDishToShoppingButton
+                        dish={{
+                          id: dish.id,
+                          name: dish.nameVi,
+                          ingredients: [],
+                          estimatedCost: 0,
+                        }}
+                        variant="outline"
+                        size="sm"
+                        showText={false}
+                      />
+                      <Link href={`/cook/${dish.id}`} className="flex-1">
+                        <Button className="w-full" size="sm">
+                          <ChefHat className="h-4 w-4 mr-2" />
+                          Xem công thức
+                        </Button>
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>

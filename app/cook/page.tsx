@@ -19,6 +19,7 @@ import { motion } from "framer-motion"
 import { useState } from "react"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { AppHeader } from "@/components/AppHeader"
+import { AddDishToShoppingButton } from "@/components/AddDishToShoppingButton"
 
 export default function CookPage() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
@@ -106,12 +107,32 @@ export default function CookPage() {
                 Bước {completedSteps.length}/{recipe.steps.length} • {progress.toFixed(0)}% hoàn thành
               </p>
             </div>
-            <Link href="/shopping">
-              <Button variant="outline" size="sm" className="gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline">Mua nguyên liệu</span>
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <AddDishToShoppingButton
+                dish={{
+                  id: "combo-cook",
+                  name: recipe.name,
+                  ingredients: (recipe.ingredients || []).map((ing) => ({
+                    id: ing.name,
+                    name: ing.name,
+                    quantity: 1,
+                    unit: "",
+                    price: 0,
+                    category: ing.category,
+                  })),
+                  estimatedCost: 0,
+                }}
+                variant="outline"
+                size="sm"
+                showText={true}
+              />
+              <Link href="/shopping">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mở danh sách</span>
+                </Button>
+              </Link>
+            </div>
           </div>
           {/* Progress Bar */}
           <div className="h-2.5 bg-muted rounded-full overflow-hidden">
@@ -175,12 +196,23 @@ export default function CookPage() {
           <CardContent className="p-5 md:p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">🥕 Nguyên liệu</h2>
-              <Link href="/shopping">
-                <Button variant="outline" size="sm">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Thêm vào giỏ
-                </Button>
-              </Link>
+              <AddDishToShoppingButton
+                dish={{
+                  id: "combo-cook",
+                  name: recipe.name,
+                  ingredients: (recipe.ingredients || []).map((ing) => ({
+                    id: ing.name,
+                    name: ing.name,
+                    quantity: 1,
+                    unit: "",
+                    price: 0,
+                    category: ing.category,
+                  })),
+                  estimatedCost: 0,
+                }}
+                variant="outline"
+                size="sm"
+              />
             </div>
             <div className="space-y-3">
               {Array.from(new Set(recipe.ingredients.map(i => i.category))).map(category => (

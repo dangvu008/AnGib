@@ -25,10 +25,12 @@ import { toast } from "sonner"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { format, addDays } from "date-fns"
 import { vi } from "date-fns/locale"
+import { AddToShoppingDialog } from "@/components/AddToShoppingDialog"
 
 export default function MenuPage() {
   const [applyingMenu, setApplyingMenu] = useState<any>(null)
   const [startDate, setStartDate] = useState(new Date())
+  const [showAddDialog, setShowAddDialog] = useState(false)
 
   const mealPlans = [
     {
@@ -209,14 +211,23 @@ export default function MenuPage() {
                       </div>
                     </div>
                   <div className="flex gap-2">
-                    <Button 
-                      className="flex-1" 
-                      size="sm"
-                      onClick={() => setApplyingMenu(plan)}
-                    >
-                      <ChefHat className="h-4 w-4 mr-2" />
-                      Áp dụng
-                    </Button>
+                    <div className="flex gap-2 flex-1">
+                      <Button 
+                        className="flex-1" 
+                        size="sm"
+                        onClick={() => setApplyingMenu(plan)}
+                      >
+                        <ChefHat className="h-4 w-4 mr-2" />
+                        Áp dụng
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddDialog(true)}
+                      >
+                        Thêm vào đi chợ
+                      </Button>
+                    </div>
                     <ShareButton
                       content={{
                         title: plan.name,
@@ -257,6 +268,11 @@ export default function MenuPage() {
           ))}
         </div>
       </main>
+  <AddToShoppingDialog
+    open={showAddDialog}
+    onOpenChange={setShowAddDialog}
+    onAddIngredients={() => setShowAddDialog(false)}
+  />
 
       {/* Apply Menu Sheet */}
       <Sheet open={applyingMenu !== null} onOpenChange={(open) => !open && setApplyingMenu(null)}>

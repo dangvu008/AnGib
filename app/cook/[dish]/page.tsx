@@ -20,6 +20,7 @@ import { AppHeader } from "@/components/AppHeader"
 import { ShareButton } from "@/components/ShareButton"
 import { toast } from "sonner"
 import { useParams } from "next/navigation"
+import { AddDishToShoppingButton } from "@/components/AddDishToShoppingButton"
 
 // Database công thức chi tiết cho từng món
 const recipesDatabase: any = {
@@ -248,10 +249,28 @@ export default function CookDishPage() {
                 size="sm"
                 variant="outline"
               />
+              <AddDishToShoppingButton
+                dish={{
+                  id: recipe.slug,
+                  name: recipe.name,
+                  ingredients: (recipe.ingredients || []).map((ing: any) => ({
+                    id: ing.name,
+                    name: ing.name,
+                    quantity: 1,
+                    unit: "",
+                    price: 0,
+                    category: ing.category,
+                  })),
+                  estimatedCost: 0,
+                }}
+                variant="outline"
+                size="sm"
+                showText={true}
+              />
               <Link href="/shopping">
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2">
                   <ShoppingCart className="h-4 w-4" />
-                  <span className="hidden sm:inline">Mua nguyên liệu</span>
+                  <span className="hidden sm:inline">Mở danh sách</span>
                 </Button>
               </Link>
             </div>

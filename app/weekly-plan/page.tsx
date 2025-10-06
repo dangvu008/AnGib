@@ -24,6 +24,8 @@ import { motion } from "framer-motion"
 import { toast } from "sonner"
 import { ShareButton } from "@/components/ShareButton"
 import { AppHeader } from "@/components/AppHeader"
+import { AddToShoppingDialog } from "@/components/AddToShoppingDialog"
+import { useState } from "react"
 
 interface MealPlan {
   id: string
@@ -43,6 +45,7 @@ interface WeeklyPlanData {
 }
 
 export default function WeeklyPlanPage() {
+  const [showAddDialog, setShowAddDialog] = useState(false)
   const [planData, setPlanData] = useState<WeeklyPlanData>({
     totalMeals: 21,
     plannedMeals: 0,
@@ -335,6 +338,9 @@ export default function WeeklyPlanPage() {
                 size="sm"
                 variant="outline"
               />
+              <Button onClick={() => setShowAddDialog(true)} variant="outline" size="sm">
+                Chuẩn bị đi chợ tuần này
+              </Button>
               <Button onClick={autoGeneratePlan} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Tự động
@@ -521,5 +527,10 @@ export default function WeeklyPlanPage() {
         </div>
       </div>
     </div>
+    <AddToShoppingDialog
+      open={showAddDialog}
+      onOpenChange={setShowAddDialog}
+      onAddIngredients={() => setShowAddDialog(false)}
+    />
   )
 }
