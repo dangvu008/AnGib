@@ -210,10 +210,10 @@ export default function MenuPage() {
                         </p>
                       </div>
                     </div>
-                  <div className="flex gap-2">
-                    <div className="flex gap-2 flex-1">
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button 
-                        className="flex-1" 
+                        className="flex-1 min-w-[140px]"
                         size="sm"
                         onClick={() => setApplyingMenu(plan)}
                       >
@@ -222,7 +222,8 @@ export default function MenuPage() {
                       </Button>
                       <Button 
                         variant="outline"
-                        size="sm"
+                        size="sm" 
+                        className="min-w-[160px]"
                         onClick={() => setShowAddDialog(true)}
                       >
                         Thêm vào đi chợ
@@ -255,7 +256,8 @@ export default function MenuPage() {
                     />
                     <Button 
                       variant="outline" 
-                      size="sm"
+                      size="sm" 
+                      className="whitespace-nowrap"
                       onClick={() => toast.info("📋 Tính năng xem chi tiết đang phát triển")}
                     >
                       Chi tiết
