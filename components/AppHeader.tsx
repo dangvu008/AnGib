@@ -36,6 +36,7 @@ import { ClientOnly } from "@/components/ClientOnly"
 export function AppHeader() {
   const pathname = usePathname()
   const { isAuthenticated, user, login, logout } = useAuth()
+  const [cartCount, setCartCount] = useState(0)
 
   const isActive = (path: string) => pathname === path
 
@@ -53,6 +54,44 @@ export function AppHeader() {
     }
     login(demoUser)
   }
+
+  // Load shopping cart count from localStorage and keep it updated
+  useEffect(() => {
+    const computeCount = () => {
+      try {
+        const saved = localStorage.getItem("angi-shopping-list")
+        if (!saved) {
+          setCartCount(0)
+          return
+        }
+        const items = JSON.parse(saved) as Array<any>
+        // show count of unchecked items, fallback to total
+        const unchecked = items.filter((i) => !i.checked)
+        setCartCount(unchecked.length || items.length)
+      } catch {
+        setCartCount(0)
+      }
+    }
+
+    computeCount()
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "angi-shopping-list") computeCount()
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") computeCount()
+    }
+
+    window.addEventListener("storage", onStorage)
+    document.addEventListener("visibilitychange", onVisibility)
+    const interval = window.setInterval(computeCount, 4000)
+
+    return () => {
+      window.removeEventListener("storage", onStorage)
+      document.removeEventListener("visibilitychange", onVisibility)
+      window.clearInterval(interval)
+    }
+  }, [])
 
   return (
     <header className="border-b border-border/40 bg-card/95 backdrop-blur-2xl sticky top-0 z-50 shadow-sm">
@@ -84,6 +123,22 @@ export function AppHeader() {
               Thực đơn
             </Button>
           </Link>
+        {/* Shopping Cart quick access */}
+        <Link href="/shopping" className="hidden md:block relative">
+          <Button 
+            variant={isActive("/shopping") ? "default" : "ghost"}
+            size="sm"
+            className="font-medium hover:bg-primary/10 gap-2"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden lg:inline">Đi chợ</span>
+          </Button>
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-primary text-white text-[10px] flex items-center justify-center shadow">
+              {cartCount}
+            </span>
+          )}
+        </Link>
           <Link href="/dishes" className="hidden md:block">
             <Button 
               variant={isActive("/dishes") ? "default" : "ghost"} 
@@ -156,6 +211,11 @@ export function AppHeader() {
                   >
                     <ShoppingCart className="mr-3 h-5 w-5" />
                     Đi chợ
+                    {cartCount > 0 && (
+                      <span className="ml-auto inline-flex h-6 min-w-6 px-2 items-center justify-center rounded-full bg-primary text-white text-xs">
+                        {cartCount}
+                      </span>
+                    )}
                   </Button>
                 </Link>
                 <Link href="/cook" className="w-full">
