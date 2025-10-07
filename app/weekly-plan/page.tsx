@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   ArrowLeft,
   Settings,
-  RefreshCw
+  RefreshCw,
+  ShoppingCart
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -52,6 +53,7 @@ export default function WeeklyPlanPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [editingMeal, setEditingMeal] = useState<string | null>(null)
+  const [isPlanInCart, setIsPlanInCart] = useState(false)
   const [newMeal, setNewMeal] = useState({
     breakfast: "",
     lunch: "",
@@ -61,7 +63,46 @@ export default function WeeklyPlanPage() {
 
   useEffect(() => {
     loadWeeklyPlan()
+    checkPlanInCart()
   }, [])
+
+  const checkPlanInCart = () => {
+    try {
+      const saved = localStorage.getItem("angi-shopping-list")
+      if (!saved) return
+      const list = JSON.parse(saved) as Array<any>
+      const exists = (list || []).some((i: any) => i.sourcePlanId === "weekly-plan")
+      setIsPlanInCart(exists)
+    } catch {}
+  }
+
+  const handleAddPlanToCart = () => {
+    if (isPlanInCart) {
+      toast.info("Kế hoạch tuần đã có trong giỏ", {
+        description: "Bạn có thể chỉnh sửa trong trang Đi chợ"
+      })
+      return
+    }
+    try {
+      const saved = localStorage.getItem("angi-shopping-list")
+      const list = saved ? JSON.parse(saved) : []
+      list.push({
+        id: Date.now(),
+        name: "Kế hoạch tuần",
+        quantity: "1",
+        price: 0,
+        category: "Khác",
+        checked: false,
+        note: "Từ kế hoạch tuần",
+        sourcePlanId: "weekly-plan"
+      })
+      localStorage.setItem("angi-shopping-list", JSON.stringify(list))
+      setIsPlanInCart(true)
+      toast.success("Đã thêm kế hoạch tuần vào giỏ")
+    } catch {
+      toast.error("Không thể cập nhật giỏ")
+    }
+  }
 
   const loadWeeklyPlan = () => {
     try {
@@ -337,8 +378,14 @@ export default function WeeklyPlanPage() {
                 size="sm"
                 variant="outline"
               />
-              <Button onClick={() => setShowAddDialog(true)} variant="outline" size="sm">
-                Chuẩn bị đi chợ tuần này
+              <Button 
+                onClick={handleAddPlanToCart} 
+                variant={isPlanInCart ? "secondary" : "outline"} 
+                size="sm"
+                className="gap-2"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {isPlanInCart ? "Đã có trong giỏ" : "Chuẩn bị đi chợ tuần này"}
               </Button>
               <Button onClick={autoGeneratePlan} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
