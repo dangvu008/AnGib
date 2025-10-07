@@ -182,6 +182,27 @@ export default function MenuDetailPage() {
     }
   }
 
+  const handleSaveTemplate = () => {
+    try {
+      const raw = localStorage.getItem("angi-menu-templates")
+      const templates = raw ? JSON.parse(raw) : []
+      const template = {
+        id: `${Date.now()}`,
+        name: menu.name,
+        description: menu.description,
+        days: menu.days,
+        schedule: menu.schedule,
+        createdAt: new Date().toISOString(),
+        favorite: false,
+      }
+      const next = [template, ...templates]
+      localStorage.setItem("angi-menu-templates", JSON.stringify(next))
+      toast.success("✅ Đã lưu mẫu thực đơn")
+    } catch {
+      toast.error("Không thể lưu mẫu thực đơn")
+    }
+  }
+
   if (!menu) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -257,6 +278,14 @@ export default function MenuDetailPage() {
               >
                 <ShoppingCart className="h-4 w-4" />
                 {isPlanInCart ? "Đã có trong giỏ" : "Thêm vào giỏ"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleSaveTemplate}
+                className="gap-2"
+              >
+                <Star className="h-4 w-4" />
+                Lưu mẫu
               </Button>
               
               <ShareButton

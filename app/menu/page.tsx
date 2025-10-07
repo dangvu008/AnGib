@@ -19,6 +19,7 @@ import { motion } from "framer-motion"
 import { GlobalSearch } from "@/components/GlobalSearch"
 import { AppHeader } from "@/components/AppHeader"
 import { ShareButton } from "@/components/ShareButton"
+import MenuTemplates from "@/components/MenuTemplates"
 import { QuickHideButton } from "@/components/HideButton"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -258,6 +259,11 @@ export default function MenuPage() {
               <p className="text-xs text-muted-foreground">Hoàn thành</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Saved Templates */}
+        <div className="mb-8">
+          <MenuTemplates onApply={(menu) => handleApplyMenu(menu)} />
         </div>
 
         {/* Meal Plans */}
