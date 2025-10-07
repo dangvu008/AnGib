@@ -8,18 +8,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ShoppingCart, Plus, Check } from "lucide-react"
+import { ShoppingCart, Check } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/currency"
-
-interface Ingredient {
-  id: string
-  name: string
-  quantity: number
-  unit: string
-  price?: number
-  category?: string
-}
+import { deduplicateIngredients, isSourceInCart, formatCurrency, type ShoppingItem, type Ingredient } from "@/lib/shopping-utils"
 
 interface Dish {
   id: string
@@ -51,14 +42,9 @@ export function AddDishToShoppingButton({
 
   // Determine if this dish already exists in shopping list (by sourceDishId)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("angi-shopping-list")
-      if (!saved) return
-      const list = JSON.parse(saved) as Array<any>
-      const exists = (list || []).some((i: any) => i.sourceDishId === dish.id)
-      setIsInCart(exists)
-      if (exists) setIsAdded(true)
-    } catch {}
+    const exists = isSourceInCart(dish.id, 'dish')
+    setIsInCart(exists)
+    if (exists) setIsAdded(true)
   }, [dish.id])
 
   const handleAddToShopping = async (e: React.MouseEvent) => {
@@ -78,23 +64,25 @@ export function AddDishToShoppingButton({
     try {
       // Get current shopping list from localStorage
       const savedList = localStorage.getItem("angi-shopping-list")
-      let shoppingList: any[] = []
+      let existingItems: ShoppingItem[] = []
       
       if (savedList) {
         try {
-          shoppingList = JSON.parse(savedList)
+          existingItems = JSON.parse(savedList)
         } catch (e) {
           console.error("Failed to parse shopping list", e)
         }
       }
 
-      // Get or generate ID
-      const newId = shoppingList.length > 0 
-        ? Math.max(...shoppingList.map((item: any) => item.id || 0)) + 1 
-        : 1
-
-      // Add dish ingredients to shopping list
-      const ingredientsToAdd = dish.ingredients || []
+      // Convert dish ingredients to Ingredient format
+      const ingredientsToAdd: Ingredient[] = (dish.ingredients || []).map(ing => ({
+        id: ing.id,
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit,
+        price: ing.price,
+        category: ing.category
+      }))
       
       if (ingredientsToAdd.length === 0) {
         toast.warning("⚠️ Món này chưa có thông tin nguyên liệu")
@@ -102,72 +90,23 @@ export function AddDishToShoppingButton({
         return
       }
 
-      // Aggregate ingredients
-      const ingredientMap = new Map()
-      
-      // Check existing items
-      shoppingList.forEach((item: any) => {
-        ingredientMap.set(item.name, {
-          ...item,
-          existingId: item.id
-        })
-      })
-
-      // Add new ingredients or update quantities
-      let addedCount = 0
-      let updatedCount = 0
-
-      ingredientsToAdd.forEach((ing) => {
-        const existing = ingredientMap.get(ing.name)
-        
-        if (existing) {
-          // Update existing item quantity
-          const currentQty = parseFloat(existing.quantity) || 0
-          const newQty = currentQty + ing.quantity
-          
-          existing.quantity = `${newQty}${ing.unit}`
-          existing.price = (existing.price || 0) + (ing.price || 0)
-          
-          // Update note to show multiple sources
-          if (!existing.note?.includes(dish.name)) {
-            existing.note = existing.note 
-              ? `${existing.note}, ${dish.name}`
-              : `Cho bữa: ${dish.name}`
-          }
-          
-          updatedCount++
-        } else {
-          // Add new item
-          ingredientMap.set(ing.name, {
-            id: newId + ingredientMap.size,
-            name: ing.name,
-            quantity: `${ing.quantity}${ing.unit}`,
-            price: ing.price || 0,
-            category: getCategoryFromIngredient(ing.name),
-            checked: false,
-            note: `Cho bữa: ${dish.name}`,
-            sourceDishId: dish.id
-          })
-          addedCount++
-        }
-      })
-
-      // Convert map back to array
-      const updatedList = Array.from(ingredientMap.values()).map(item => {
-        // Remove existingId helper field
-        const { existingId, ...cleanItem } = item as any
-        return cleanItem
-      })
+      // Use enhanced deduplication logic
+      const result = deduplicateIngredients(
+        existingItems,
+        ingredientsToAdd,
+        dish.name,
+        dish.id
+      )
 
       // Save to localStorage
-      localStorage.setItem("angi-shopping-list", JSON.stringify(updatedList))
+      localStorage.setItem("angi-shopping-list", JSON.stringify(result.updatedItems))
       setIsInCart(true)
 
       // Success feedback
-      const totalPrice = dish.estimatedCost || ingredientsToAdd.reduce((sum, ing) => sum + (ing.price || 0), 0)
+      const totalPrice = dish.estimatedCost || result.totalPrice
       
       toast.success(`✅ Đã thêm vào danh sách mua sắm`, {
-        description: `${addedCount} nguyên liệu mới${updatedCount > 0 ? `, ${updatedCount} đã cập nhật` : ''} • ${formatCurrency(totalPrice)}`,
+        description: `${result.addedCount} nguyên liệu mới${result.updatedCount > 0 ? `, ${result.updatedCount} đã cập nhật` : ''} • ${formatCurrency(totalPrice)}`,
         duration: 3000
       })
 
@@ -185,15 +124,6 @@ export function AddDishToShoppingButton({
     } finally {
       setIsAdding(false)
     }
-  }
-
-  const getCategoryFromIngredient = (ingredientName: string): string => {
-    const name = ingredientName.toLowerCase()
-    if (name.includes('đậu') || name.includes('nấm') || name.includes('hũ') || name.includes('thịt') || name.includes('cá')) return 'Đạm'
-    if (name.includes('rau') || name.includes('củ') || name.includes('cà') || name.includes('bí') || name.includes('su hào') || name.includes('su su')) return 'Rau củ'
-    if (name.includes('dầu') || name.includes('tỏi') || name.includes('hành') || name.includes('muối') || name.includes('nước mắm') || name.includes('mắm') || name.includes('tương') || name.includes('ớt')) return 'Gia vị'
-    if (name.includes('gạo') || name.includes('bún') || name.includes('phở') || name.includes('bánh') || name.includes('mì')) return 'Tinh bột'
-    return 'Khác'
   }
 
   const buttonContent = (
