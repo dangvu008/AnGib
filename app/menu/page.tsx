@@ -98,6 +98,7 @@ export default function MenuPage() {
     const appliedMenu = {
       id: menu.id,
       name: menu.name,
+      description: menu.description,
       startDate: startDate.toISOString(),
       days: menu.days,
       schedule: menu.schedule,
@@ -106,16 +107,72 @@ export default function MenuPage() {
     
     localStorage.setItem("angi-active-menu", JSON.stringify(appliedMenu))
     
+    // Auto-generate shopping list from menu
+    generateShoppingListFromMenu(menu)
+    
     toast.success(`✅ Đã áp dụng: ${menu.name}`, {
       description: `Bắt đầu từ ${format(startDate, "dd/MM/yyyy", { locale: vi })}`,
       duration: 4000,
       action: {
-        label: "Xem lịch",
+        label: "Xem trang chủ",
         onClick: () => window.location.href = "/"
       }
     })
     
     setApplyingMenu(null)
+  }
+
+  const generateShoppingListFromMenu = (menu: any) => {
+    try {
+      // Get existing shopping list
+      const saved = localStorage.getItem("angi-shopping-list")
+      const existingList = saved ? JSON.parse(saved) : []
+      
+      // Create a comprehensive shopping list from menu
+      const menuShoppingList = {
+        id: Date.now(),
+        name: `Thực đơn: ${menu.name}`,
+        quantity: "1",
+        price: 0,
+        category: "Khác",
+        checked: false,
+        note: `Từ thực đơn ${menu.name}`,
+        sourceMenuId: String(menu.id),
+        isMenuPlan: true
+      }
+      
+      // Add menu plan to shopping list
+      existingList.push(menuShoppingList)
+      
+      // Add individual meals as separate items for easy tracking
+      menu.schedule.forEach((day: any, dayIndex: number) => {
+        Object.entries(day.meals).forEach(([mealType, mealName]: [string, any]) => {
+          existingList.push({
+            id: Date.now() + dayIndex + Math.random(),
+            name: `${mealName} (${day.date})`,
+            quantity: "1",
+            price: 0,
+            category: "Khác",
+            checked: false,
+            note: `Bữa ${mealType === 'breakfast' ? 'sáng' : mealType === 'lunch' ? 'trưa' : 'tối'} - Ngày ${dayIndex + 1}`,
+            sourceMenuId: String(menu.id),
+            sourceDay: dayIndex + 1,
+            sourceMealType: mealType
+          })
+        })
+      })
+      
+      localStorage.setItem("angi-shopping-list", JSON.stringify(existingList))
+      
+      toast.success("📝 Đã tạo danh sách mua sắm từ thực đơn", {
+        description: `${menu.schedule.length * 3} bữa ăn đã được thêm vào giỏ`,
+        duration: 3000
+      })
+      
+    } catch (error) {
+      console.error("Error generating shopping list:", error)
+      toast.error("Không thể tạo danh sách mua sắm")
+    }
   }
 
   // Load items from localStorage shopping list to determine if menu already referenced
@@ -314,6 +371,13 @@ export default function MenuPage() {
                       onClick={() => window.location.href = `/menu/${plan.id}`}
                     >
                       Chi tiết
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="h-10 px-4 whitespace-nowrap"
+                      onClick={() => setApplyingMenu(plan)}
+                    >
+                      Áp dụng
                     </Button>
                     </div>
                   </div>

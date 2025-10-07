@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/AppHeader"
 import { WeeklyPlanCard } from "@/components/WeeklyPlanCard"
 import { MenuSuggestions } from "@/components/MenuSuggestions"
 import { CurrentMealHighlight } from "@/components/CurrentMealHighlight"
+import { AppliedMenuCard } from "@/components/AppliedMenuCard"
 import { Input } from "@/components/ui/input"
 import {
   ChefHat,
@@ -212,6 +213,13 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
+          </div>
+        )}
+
+        {/* Applied Menu - Most prominent for authenticated users */}
+        {isAuthenticated && (
+          <div className="mb-8">
+            <AppliedMenuCard />
           </div>
         )}
 

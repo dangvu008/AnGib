@@ -4,7 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
-import { Toaster } from "sonner"
+import { MenuNotification } from "@/components/MenuNotification"
 import { HiddenItemsProvider } from "@/contexts/HiddenItemsContext"
 import { AuthProvider } from "@/contexts/AuthContext"
 import "./globals.css"
@@ -26,6 +26,7 @@ export default function RootLayout({
               <AuthProvider>
                 <HiddenItemsProvider>
                   <Suspense fallback={null}>{children}</Suspense>
+                  <MenuNotification />
                   <Toaster position="top-center" richColors closeButton />
                   <Analytics />
                 </HiddenItemsProvider>
