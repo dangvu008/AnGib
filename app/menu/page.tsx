@@ -307,14 +307,14 @@ export default function MenuPage() {
                       variant="outline"
                     />
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-10 px-4 whitespace-nowrap"
-                        onClick={() => toast.info("📋 Tính năng xem chi tiết đang phát triển")}
-                      >
-                        Chi tiết
-                      </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-10 px-4 whitespace-nowrap"
+                      onClick={() => window.location.href = `/menu/${plan.id}`}
+                    >
+                      Chi tiết
+                    </Button>
                     </div>
                   </div>
                   </CardContent>
